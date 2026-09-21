@@ -1,0 +1,18 @@
+# ビルド生成物
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 環境変数・秘密情報（APIキーは GitHub Secrets で管理する）
+.env
+.env.*
+!.env.example
+
+# OS / エディタ
+.DS_Store
+.idea/
+.vscode/
