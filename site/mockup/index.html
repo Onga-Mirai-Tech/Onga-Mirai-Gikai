@@ -1,56 +1,56 @@
 <title>みらい議会 遠賀町版</title>
 <style>
 :root{
-  --paper:#FAF6F4;
+  --paper:#F3F8FC;
   --surface:#FFFFFF;
-  --sunk:#F3ECEA;
-  --ink:#33282E;
-  --ink-soft:#5C4E54;
-  --muted:#8C7C82;
-  --rule:#E8DDDA;
-  --rule-soft:#F0E8E6;
-  --shiso:#8E4F6E;
-  --shiso-deep:#6F3B55;
-  --shiso-wash:#F7EEF2;
-  --board:#EFE7E4;
-  --shadow:0 1px 2px rgba(80,50,64,.05), 0 10px 28px rgba(80,50,64,.08);
-  --shadow-sm:0 1px 3px rgba(80,50,64,.07);
+  --sunk:#E7F1F8;
+  --ink:#22303F;
+  --ink-soft:#48596B;
+  --muted:#7C8C9B;
+  --rule:#D7E5EF;
+  --rule-soft:#E8F0F6;
+  --accent:#1F5FA8;
+  --accent-deep:#16447A;
+  --accent-wash:#E4EFF9;
+  --board:#DCE9F3;
+  --shadow:0 1px 2px rgba(28,60,96,.06), 0 10px 28px rgba(28,60,96,.09);
+  --shadow-sm:0 1px 3px rgba(28,60,96,.08);
   --round:"Hiragino Maru Gothic ProN","Hiragino Maru Gothic Pro","Yu Gothic Medium","YuGothic","Meiryo",system-ui,sans-serif;
   --sans:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
   --serif:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP",serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --paper:#1C1619;
-    --surface:#241D21;
-    --sunk:#2C2429;
-    --ink:#EDE5E7;
-    --ink-soft:#CBBFC4;
-    --muted:#9C8F94;
-    --rule:#3A3035;
-    --rule-soft:#2E262A;
-    --shiso:#D79CB8;
-    --shiso-deep:#E6B8CD;
-    --shiso-wash:#2E2329;
-    --board:#151113;
-    --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px rgba(0,0,0,.4);
+    --paper:#121821;
+    --surface:#1A2230;
+    --sunk:#212B3A;
+    --ink:#E4EAF2;
+    --ink-soft:#BAC6D4;
+    --muted:#8695A5;
+    --rule:#2F3A4A;
+    --rule-soft:#27303E;
+    --accent:#7DB3E8;
+    --accent-deep:#A6CCF2;
+    --accent-wash:#1C2735;
+    --board:#0B1018;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px rgba(0,0,0,.42);
     --shadow-sm:0 1px 3px rgba(0,0,0,.4);
   }
 }
 :root[data-theme="dark"]{
-  --paper:#1C1619;
-  --surface:#241D21;
-  --sunk:#2C2429;
-  --ink:#EDE5E7;
-  --ink-soft:#CBBFC4;
-  --muted:#9C8F94;
-  --rule:#3A3035;
-  --rule-soft:#2E262A;
-  --shiso:#D79CB8;
-  --shiso-deep:#E6B8CD;
-  --shiso-wash:#2E2329;
-  --board:#151113;
-  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px rgba(0,0,0,.4);
+  --paper:#121821;
+  --surface:#1A2230;
+  --sunk:#212B3A;
+  --ink:#E4EAF2;
+  --ink-soft:#BAC6D4;
+  --muted:#8695A5;
+  --rule:#2F3A4A;
+  --rule-soft:#27303E;
+  --accent:#7DB3E8;
+  --accent-deep:#A6CCF2;
+  --accent-wash:#1C2735;
+  --board:#0B1018;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px rgba(0,0,0,.42);
   --shadow-sm:0 1px 3px rgba(0,0,0,.4);
 }
 *{box-sizing:border-box}
@@ -61,11 +61,11 @@ body{
 }
 .wrap{max-width:1200px;margin:0 auto;padding-inline:16px;padding-block:44px 72px}
 a{color:inherit}
-a:focus-visible,.item:focus-visible{outline:2px solid var(--shiso);outline-offset:3px;border-radius:4px}
+a:focus-visible,.card:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 /* ---- 導入 ---- */
-.eyebrow{font-family:var(--round);font-size:11.5px;letter-spacing:.14em;color:var(--shiso);margin:0 0 12px}
+.eyebrow{font-family:var(--round);font-size:11.5px;letter-spacing:.14em;color:var(--accent);margin:0 0 12px}
 h1{
   font-family:var(--round);font-weight:600;
   font-size:clamp(27px,5vw,40px);line-height:1.4;
@@ -74,36 +74,41 @@ h1{
 .lede{max-width:64ch}
 .lede p{margin:0 0 14px;color:var(--ink-soft)}
 .lede strong{color:var(--ink)}
-
 .callout{
-  border-radius:16px;background:var(--shiso-wash);
+  border-radius:16px;background:var(--accent-wash);
   padding:18px 22px;margin:28px 0 0;max-width:64ch;
   font-size:13.5px;line-height:1.9;color:var(--ink-soft);
 }
 .callout b{color:var(--ink);font-family:var(--round)}
+.swatches{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.sw{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.sw i{width:17px;height:17px;border-radius:5px;display:block;box-shadow:inset 0 0 0 1px rgba(34,48,63,.12)}
 
-/* ---- ロゴ案 ---- */
-.logos{margin-top:52px}
+/* ---- 見出し ---- */
 .sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
 .sec-head h2{font-family:var(--round);font-size:21px;font-weight:600;margin:0}
 .sec-head span{font-size:12px;color:var(--muted)}
 .sec-lede{margin:0 0 24px;color:var(--ink-soft);font-size:14px;max-width:64ch}
-.logo-row{
-  display:grid;gap:18px;
-  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-}
+
+/* ---- ロゴ ---- */
+.logos{margin-top:52px}
+.logo-row{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
 .logo-card{
   background:var(--surface);border-radius:18px;padding:26px 22px 20px;
   box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:14px;min-width:0;
 }
 .logo-stage{
-  display:flex;align-items:center;justify-content:center;
-  min-height:96px;border-radius:14px;background:var(--sunk);padding:14px;
+  display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;
+  min-height:96px;border-radius:14px;background:var(--sunk);padding:16px;
 }
+.logo-stage.reverse{background:var(--accent-deep)}
+.logo-stage.reverse .logomark{color:#FFFFFF}
+.logo-stage.reverse .logotype .n{color:#FFFFFF}
+.logo-stage.reverse .logotype .s{color:rgba(255,255,255,.72)}
 .logo-card h3{font-family:var(--round);font-size:14px;font-weight:600;margin:0}
 .logo-card p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-soft)}
 
-.logomark{display:flex;align-items:center;gap:10px;color:var(--shiso)}
+.logomark{display:flex;align-items:center;gap:10px;color:var(--accent)}
 .logomark svg{display:block;flex:none}
 .logotype{display:flex;flex-direction:column;line-height:1.15}
 .logotype .n{font-family:var(--round);font-weight:600;font-size:19px;color:var(--ink);letter-spacing:.03em}
@@ -124,8 +129,8 @@ h1{
 .rules li{font-size:12.5px;line-height:1.75;color:var(--ink-soft);padding-left:19px;position:relative}
 .rules li::before{
   content:"";position:absolute;left:0;top:.62em;
-  width:9px;height:9px;border-radius:50%;background:var(--shiso-wash);
-  border:1.5px solid var(--shiso);
+  width:9px;height:9px;border-radius:50%;background:var(--accent-wash);
+  border:1.5px solid var(--accent);
 }
 .rules li b{color:var(--ink)}
 
@@ -148,14 +153,14 @@ h1{
 .app-head .logotype .s{font-size:8px;letter-spacing:.1em;margin-top:1px}
 .unofficial{
   margin-left:auto;font-family:var(--round);font-size:9.5px;
-  color:var(--shiso);background:var(--shiso-wash);
+  color:var(--accent);background:var(--accent-wash);
   border-radius:999px;padding:3px 9px;white-space:nowrap;
 }
 .app-body{padding:16px 14px}
 .crumb{font-size:11px;color:var(--muted);margin:0 0 12px;line-height:1.7}
 .h2{font-family:var(--round);font-size:19px;font-weight:600;line-height:1.55;margin:0 0 6px;text-wrap:balance}
 .h3{
-  font-family:var(--round);font-size:12px;font-weight:600;color:var(--shiso);
+  font-family:var(--round);font-size:12px;font-weight:600;color:var(--accent);
   margin:24px 0 10px;display:flex;align-items:center;gap:7px;
 }
 .h3::after{content:"";flex:1;height:1px;background:var(--rule-soft)}
@@ -169,7 +174,7 @@ h1{
 .stack{display:grid;gap:9px}
 .card .t{font-size:13.5px;line-height:1.65;display:block;margin-bottom:4px;font-family:var(--round)}
 .card .s{font-size:11px;color:var(--muted);line-height:1.7;font-variant-numeric:tabular-nums}
-.speaker-mark{font-family:var(--serif);color:var(--shiso);margin-right:4px;font-size:12px}
+.speaker-mark{font-family:var(--serif);color:var(--accent);margin-right:4px;font-size:12px}
 
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .chip{
@@ -180,29 +185,23 @@ h1{
 
 /* ---- 画面内：出どころの3つの表し方 ---- */
 .summary{
-  background:var(--shiso-wash);border-radius:14px;padding:13px 14px;
-  border:1px dashed var(--shiso);
+  background:var(--accent-wash);border-radius:14px;padding:13px 14px;
+  border:1px dashed var(--accent);
 }
 .summary p{margin:0;font-size:12.5px;line-height:1.9;color:var(--ink-soft)}
 .ai-tag{
   display:inline-flex;align-items:center;gap:5px;font-family:var(--round);
-  font-size:10px;color:var(--shiso);margin-bottom:8px;font-weight:600;
+  font-size:10px;color:var(--accent);margin-bottom:8px;font-weight:600;
 }
 .ai-tag::before{
   content:"";width:13px;height:13px;border-radius:4px;
-  border:1.5px dashed var(--shiso);flex:none;
+  border:1.5px dashed var(--accent);flex:none;
 }
-.origin{
-  background:var(--surface);border-radius:14px;padding:13px 14px;
-  box-shadow:var(--shadow-sm);
-}
+.origin{background:var(--surface);border-radius:14px;padding:13px 14px;box-shadow:var(--shadow-sm)}
 .origin p{margin:0;font-family:var(--serif);font-size:12.5px;line-height:1.95}
-.origin .tag{
-  display:block;font-family:var(--round);font-size:10px;
-  color:var(--muted);margin-bottom:7px;
-}
+.origin .tag{display:block;font-family:var(--round);font-size:10px;color:var(--muted);margin-bottom:7px}
 .source{
-  display:inline-block;font-family:var(--round);font-size:11px;color:var(--shiso);
+  display:inline-block;font-family:var(--round);font-size:11px;color:var(--accent);
   text-decoration:none;margin-top:10px;
 }
 .source::after{content:" →"}
@@ -242,7 +241,7 @@ h1{
 .profile{display:flex;align-items:center;gap:13px;margin-bottom:6px}
 .avatar{
   width:46px;height:46px;border-radius:50%;flex:none;
-  background:var(--shiso-wash);color:var(--shiso);
+  background:var(--accent-wash);color:var(--accent);
   display:flex;align-items:center;justify-content:center;
   font-family:var(--serif);font-size:19px;
 }
@@ -253,10 +252,7 @@ h1{
   font-size:11px;line-height:1.8;color:var(--muted);margin-top:12px;
 }
 .count-row{display:flex;gap:8px;margin-top:2px}
-.count{
-  flex:1;background:var(--surface);border-radius:12px;padding:10px 8px;
-  text-align:center;box-shadow:var(--shadow-sm);
-}
+.count{flex:1;background:var(--surface);border-radius:12px;padding:10px 8px;text-align:center;box-shadow:var(--shadow-sm)}
 .count b{display:block;font-family:var(--round);font-size:19px;line-height:1.3;font-variant-numeric:tabular-nums}
 .count span{font-size:10px;color:var(--muted)}
 
@@ -266,7 +262,7 @@ h1{
 .bar-row .lbl{font-family:var(--round)}
 .bar-row .num{font-variant-numeric:tabular-nums;color:var(--muted);font-size:11.5px}
 .bar-track{grid-column:1 / -1;height:7px;border-radius:999px;background:var(--sunk);overflow:hidden}
-.bar-fill{height:100%;border-radius:999px;background:var(--shiso);opacity:.55}
+.bar-fill{height:100%;border-radius:999px;background:var(--accent);opacity:.5}
 
 /* ---- 画面内：フッター ---- */
 .app-foot{
@@ -274,79 +270,55 @@ h1{
   font-size:10.5px;line-height:1.9;color:var(--muted);
 }
 .app-foot b{display:block;color:var(--ink-soft);font-family:var(--round);margin-bottom:4px}
+.app-foot .oss{display:block;margin-top:7px}
 
 /* ---- 解説 ---- */
 .legend{margin-top:60px}
 .legend-grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(248px,1fr))}
 .legend-grid section{background:var(--surface);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow-sm);min-width:0}
-.legend-grid h3{font-family:var(--round);font-size:13.5px;font-weight:600;margin:0 0 8px;color:var(--shiso)}
+.legend-grid h3{font-family:var(--round);font-size:13.5px;font-weight:600;margin:0 0 8px;color:var(--accent)}
 .legend-grid p{margin:0;font-size:12.5px;line-height:1.85;color:var(--ink-soft)}
 .legend-grid code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11.5px;background:var(--sunk);padding:1px 5px;border-radius:4px}
 
-.open-q{margin-top:34px;border-radius:16px;padding:20px 22px;background:var(--shiso-wash)}
+.open-q{margin-top:34px;border-radius:16px;padding:20px 22px;background:var(--accent-wash)}
 .open-q h3{font-family:var(--round);font-size:15px;font-weight:600;margin:0 0 12px}
 .open-q ol{margin:0;padding-left:1.3em;display:grid;gap:9px}
 .open-q li{font-size:13px;line-height:1.8;color:var(--ink-soft)}
 .open-q li b{color:var(--ink)}
-
 .foot{margin-top:52px;padding-top:22px;border-top:1px solid var(--rule);font-size:12px;line-height:1.9;color:var(--muted);max-width:64ch}
 </style>
 
 <div class="wrap">
 
   <div class="lede">
-    <p class="eyebrow">たたき台 v2 ／ 2026-09-22</p>
+    <p class="eyebrow">たたき台 v3 ／ 2026-09-22</p>
     <h1>みらい議会 -遠賀町版-<br>画面デザイン案</h1>
     <p>遠賀町議会の会議録をもとに、議事の流れと「誰が何を言い、町がどう答えたか」を見せる個人運営の非公式サイトです。以下は主要な5画面のたたき台で、実際の会議録（令和8年第3回定例会）の内容をそのまま当てはめています。</p>
-    <p><strong>町民の方に親しみを持ってもらうことを優先して、前案よりやわらかくしました。</strong>ただし「議員・会派・町を評価しない」というルールは動かしていません。両立のさせ方は下の解説にまとめています。</p>
+    <p><strong>遠賀町公式ホームページの配色に合わせて青系で統一し、ロゴはC案（川と芽）を採用しました。</strong>町民に親しんでもらうことと、議員・会派・町を評価しないことの両立が主題です。</p>
   </div>
 
   <div class="callout">
-    <b>やわらかさを、中立性を崩さずに出す方法。</b><br>
-    禁じられているのは「可否や賛否に色を割り当てること」であって、サイト全体が温かい色であることではありません。そこで<b>意味を持つ色は赤しそ色の1色だけ</b>に保ったまま、角の丸み・余白・書体・地色でやわらかさを出しています。賛成11と反対1は、いまも同じ字色・同じ大きさです。<br>
-    色は遠賀町の特産である<b>赤しそ</b>から取りました。行政サイトの定番である青から離れることで、公式サイトとの見分けもつきやすくなります。
+    <b>青系にしつつ、公式サイトと取り違えられないようにする。</b><br>
+    配色を町の公式ホームページに寄せると、公式サイトだと思われる危険が上がります。そこで<b>全画面のヘッダー右上に「非公式」のラベルを常時表示</b>し、フッターにも「公式に提供しているWEBサイトではありません」と明記しました。色ではなく言葉で区別をつけています。<br>
+    やわらかさは色数ではなく、角の丸み・余白・影・丸ゴシックで出しています。<b>意味を持つ色は青1色だけ</b>で、賛成11と反対1は同じ字色・同じ大きさです。可否や賛否に色を割り当てないルールは変えていません。
+    <span class="swatches">
+      <span class="sw"><i style="background:#17357d"></i>#17357D 町HP 濃紺</span>
+      <span class="sw"><i style="background:#0d59b7"></i>#0D59B7 町HP リンク</span>
+      <span class="sw"><i style="background:#1F5FA8"></i>#1F5FA8 本サイト</span>
+      <span class="sw"><i style="background:#E4EFF9"></i>#E4EFF9 淡地</span>
+    </span>
   </div>
 
   <!-- ===== ロゴ ===== -->
   <div class="logos">
-    <div class="sec-head"><h2>ロゴ案</h2><span>3案 ／ すべてインラインSVG・外部読み込みなし</span></div>
-    <p class="sec-lede">図案は単色で、文字色に追従します。暗い画面でも同じ形のまま読めます。どれか1つを選んでいただく想定です。</p>
+    <div class="sec-head"><h2>ロゴ</h2><span>C案「川と芽」を採用 ／ インラインSVG・外部読み込みなし</span></div>
+    <p class="sec-lede">遠賀川の流れから小さな芽が伸びる形です。図案は単色で文字色に追従するので、明るい画面・暗い画面・濃紺の反転いずれでも同じ形のまま読めます。</p>
 
     <div class="logo-row">
       <div class="logo-card">
         <div class="logo-stage">
           <span class="logomark">
-            <svg width="40" height="40" viewBox="0 0 40 40" role="img" aria-label="議事の流れを表す図案">
-              <path d="M3 25 C 10 25, 10 15, 17 15 S 24 25, 31 25 S 37 19, 37 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>
-              <circle cx="9" cy="21.5" r="3.1" fill="currentColor" opacity=".55"/>
-              <circle cx="20" cy="16.6" r="4.4" fill="currentColor"/>
-              <circle cx="31" cy="25" r="3.1" fill="currentColor" opacity=".55"/>
-            </svg>
-            <span class="logotype"><span class="n">みらい議会</span><span class="s">遠賀町版</span></span>
-          </span>
-        </div>
-        <h3>A案　議事の流れ</h3>
-        <p>ゆるやかな曲線の上に、大小の丸（発言）が並びます。サイトの中核である「議事の流れ」そのものが図案になっています。遠賀川の流れにも読めます。</p>
-      </div>
-
-      <div class="logo-card">
-        <div class="logo-stage">
-          <span class="logomark">
-            <svg width="40" height="40" viewBox="0 0 40 40" role="img" aria-label="重なる二つの吹き出しの図案">
-              <path d="M6 10 h17 a5 5 0 0 1 5 5 v8 a5 5 0 0 1 -5 5 h-9 l-5 4.5 v-4.5 h-3 a5 5 0 0 1 -5 -5 v-8 a5 5 0 0 1 5 -5 z" fill="currentColor" opacity=".28"/>
-              <path d="M17 16 h17 a5 5 0 0 1 5 5 v7 a5 5 0 0 1 -5 5 h-3 v4.2 l-4.8 -4.2 h-9.2 a5 5 0 0 1 -5 -5 v-7 a5 5 0 0 1 5 -5 z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
-            </svg>
-            <span class="logotype"><span class="n">みらい議会</span><span class="s">遠賀町版</span></span>
-          </span>
-        </div>
-        <h3>B案　重なる声</h3>
-        <p>吹き出しが2つ、向き合わずに<b>重なって</b>います。質問と答弁が交わる場、という意味です。向かい合わせにすると対立に見えるため、あえてずらして重ねました。</p>
-      </div>
-
-      <div class="logo-card">
-        <div class="logo-stage">
-          <span class="logomark">
-            <svg width="40" height="40" viewBox="0 0 40 40" role="img" aria-label="川と芽の図案">
+            <svg width="44" height="44" viewBox="0 0 40 40" role="img" aria-label="みらい議会 遠賀町版">
               <path d="M4 30 C 12 30, 14 24, 22 24 S 32 27, 36 25" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".4"/>
               <path d="M4 35 C 12 35, 14 29, 22 29 S 32 32, 36 30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".25"/>
               <path d="M20 22 V 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
@@ -356,15 +328,51 @@ h1{
             <span class="logotype"><span class="n">みらい議会</span><span class="s">遠賀町版</span></span>
           </span>
         </div>
-        <h3>C案　川と芽</h3>
-        <p>遠賀川の流れから小さな芽が伸びる形です。「みらい」を直接的に表していて、いちばん親しみが出ます。一方で、議会というより町そのものの印象に寄ります。</p>
+        <h3>基本形</h3>
+        <p>図案と文字を横に組みます。ヘッダーではこの形を26pxに縮めて使います。</p>
+      </div>
+
+      <div class="logo-card">
+        <div class="logo-stage reverse">
+          <span class="logomark">
+            <svg width="44" height="44" viewBox="0 0 40 40" aria-hidden="true">
+              <path d="M4 30 C 12 30, 14 24, 22 24 S 32 27, 36 25" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>
+              <path d="M4 35 C 12 35, 14 29, 22 29 S 32 32, 36 30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".28"/>
+              <path d="M20 22 V 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M20 15 C 20 10, 24 7, 28 7 C 28 12, 24 15, 20 15 Z" fill="currentColor"/>
+              <path d="M20 19 C 20 15.5, 17 13.5, 14 13.5 C 14 17, 17 19, 20 19 Z" fill="currentColor" opacity=".6"/>
+            </svg>
+            <span class="logotype"><span class="n">みらい議会</span><span class="s">遠賀町版</span></span>
+          </span>
+        </div>
+        <h3>反転（濃紺地）</h3>
+        <p>OGP画像やSNSの共有カードなど、濃い地に置く場合。図案は白一色になります。</p>
+      </div>
+
+      <div class="logo-card">
+        <div class="logo-stage">
+          <span class="logomark" style="gap:0"><svg width="30" height="30" viewBox="0 0 40 40" aria-hidden="true">
+            <path d="M4 30 C 12 30, 14 24, 22 24 S 32 27, 36 25" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".4"/>
+            <path d="M4 35 C 12 35, 14 29, 22 29 S 32 32, 36 30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".25"/>
+            <path d="M20 22 V 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M20 15 C 20 10, 24 7, 28 7 C 28 12, 24 15, 20 15 Z" fill="currentColor"/>
+            <path d="M20 19 C 20 15.5, 17 13.5, 14 13.5 C 14 17, 17 19, 20 19 Z" fill="currentColor" opacity=".55"/>
+          </svg></span>
+          <span class="logomark" style="gap:0"><svg width="20" height="20" viewBox="0 0 40 40" aria-hidden="true">
+            <path d="M4 30 C 12 30, 14 24, 22 24 S 32 27, 36 25" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity=".4"/>
+            <path d="M20 22 V 11" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+            <path d="M20 15 C 20 10, 24 7, 28 7 C 28 12, 24 15, 20 15 Z" fill="currentColor"/>
+          </svg></span>
+        </div>
+        <h3>図案のみ・小サイズ</h3>
+        <p>ファビコン用。16px前後では2本目の波と左の葉を落として、線を太くします。要素を減らさないと形がつぶれます。</p>
       </div>
     </div>
   </div>
 
   <!-- ===== 画面 ===== -->
   <div class="sec-head" style="margin-top:56px"><h2>画面</h2><span>5画面 ／ 幅334pxで表示</span></div>
-  <p class="sec-lede">画面内の文字はすべて令和8年第3回定例会の実物です。以下のロゴはA案で組んでいます。</p>
+  <p class="sec-lede">画面内の文字はすべて令和8年第3回定例会の実物です。</p>
 
   <div class="boards">
 
@@ -374,10 +382,11 @@ h1{
         <div class="app-head">
           <span class="logomark">
             <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">
-              <path d="M3 25 C 10 25, 10 15, 17 15 S 24 25, 31 25 S 37 19, 37 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>
-              <circle cx="9" cy="21.5" r="3.1" fill="currentColor" opacity=".55"/>
-              <circle cx="20" cy="16.6" r="4.4" fill="currentColor"/>
-              <circle cx="31" cy="25" r="3.1" fill="currentColor" opacity=".55"/>
+              <path d="M4 30 C 12 30, 14 24, 22 24 S 32 27, 36 25" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".4"/>
+              <path d="M4 35 C 12 35, 14 29, 22 29 S 32 32, 36 30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".25"/>
+              <path d="M20 22 V 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M20 15 C 20 10, 24 7, 28 7 C 28 12, 24 15, 20 15 Z" fill="currentColor"/>
+              <path d="M20 19 C 20 15.5, 17 13.5, 14 13.5 C 14 17, 17 19, 20 19 Z" fill="currentColor" opacity=".55"/>
             </svg>
             <span class="logotype"><span class="n">みらい議会</span><span class="s">遠賀町版</span></span>
           </span>
@@ -418,14 +427,15 @@ h1{
           </div>
         </div>
         <div class="app-foot">
-          <b>非公式・個人運営のサイトです</b>
-          遠賀町・遠賀町議会・「チームみらい」とは関係ありません。AI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          <b>遠賀町・遠賀町議会が公式に提供しているWEBサイトではありません</b>
+          遠賀町公式HPに公開されている情報を基にしたAI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          <span class="oss">なお、本WEBサイトはチームみらいが公開しているOSSを参考に作成されています。</span>
         </div>
       </div></div>
       <figcaption>
         <div class="screen-label"><b>トップ</b><span>/</span></div>
         <ul class="rules">
-          <li>「さがす」を最上段に置き、<b>定例会別・議員別・テーマ別・ことばで検索</b>の4つの入口を並べる</li>
+          <li>「さがす」を最上段に置き、<b>定例会・臨時会別／議員別／テーマ別／ことばで検索</b>の4つの入口を並べる</li>
           <li>会議のあらましはAIに書かせず、下位の要約から機械的に組み立てる。要約の要約は原文から2段離れ、誤りが増幅するため</li>
           <li>見出しは「遠賀町議会で、いま話されていること」。制度の説明から入らず、町民の関心から入る</li>
         </ul>
@@ -438,10 +448,11 @@ h1{
         <div class="app-head">
           <span class="logomark">
             <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">
-              <path d="M3 25 C 10 25, 10 15, 17 15 S 24 25, 31 25 S 37 19, 37 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>
-              <circle cx="9" cy="21.5" r="3.1" fill="currentColor" opacity=".55"/>
-              <circle cx="20" cy="16.6" r="4.4" fill="currentColor"/>
-              <circle cx="31" cy="25" r="3.1" fill="currentColor" opacity=".55"/>
+              <path d="M4 30 C 12 30, 14 24, 22 24 S 32 27, 36 25" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".4"/>
+              <path d="M4 35 C 12 35, 14 29, 22 29 S 32 32, 36 30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".25"/>
+              <path d="M20 22 V 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M20 15 C 20 10, 24 7, 28 7 C 28 12, 24 15, 20 15 Z" fill="currentColor"/>
+              <path d="M20 19 C 20 15.5, 17 13.5, 14 13.5 C 14 17, 17 19, 20 19 Z" fill="currentColor" opacity=".55"/>
             </svg>
             <span class="logotype"><span class="n">みらい議会</span><span class="s">遠賀町版</span></span>
           </span>
@@ -496,8 +507,9 @@ h1{
           <p class="index-note">このページは索引です。発言の内容は各ページでご覧ください。賛否の記録は公表されていないため、このサイトでは扱っていません。</p>
         </div>
         <div class="app-foot">
-          <b>非公式・個人運営のサイトです</b>
-          遠賀町・遠賀町議会・「チームみらい」とは関係ありません。AI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          <b>遠賀町・遠賀町議会が公式に提供しているWEBサイトではありません</b>
+          遠賀町公式HPに公開されている情報を基にしたAI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          <span class="oss">なお、本WEBサイトはチームみらいが公開しているOSSを参考に作成されています。</span>
         </div>
       </div></div>
       <figcaption>
@@ -517,10 +529,11 @@ h1{
         <div class="app-head">
           <span class="logomark">
             <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">
-              <path d="M3 25 C 10 25, 10 15, 17 15 S 24 25, 31 25 S 37 19, 37 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>
-              <circle cx="9" cy="21.5" r="3.1" fill="currentColor" opacity=".55"/>
-              <circle cx="20" cy="16.6" r="4.4" fill="currentColor"/>
-              <circle cx="31" cy="25" r="3.1" fill="currentColor" opacity=".55"/>
+              <path d="M4 30 C 12 30, 14 24, 22 24 S 32 27, 36 25" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".4"/>
+              <path d="M4 35 C 12 35, 14 29, 22 29 S 32 32, 36 30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".25"/>
+              <path d="M20 22 V 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M20 15 C 20 10, 24 7, 28 7 C 28 12, 24 15, 20 15 Z" fill="currentColor"/>
+              <path d="M20 19 C 20 15.5, 17 13.5, 14 13.5 C 14 17, 17 19, 20 19 Z" fill="currentColor" opacity=".55"/>
             </svg>
             <span class="logotype"><span class="n">みらい議会</span><span class="s">遠賀町版</span></span>
           </span>
@@ -569,14 +582,15 @@ h1{
           <a class="source" href="#">この日の会議録をすべて読む</a>
         </div>
         <div class="app-foot">
-          <b>非公式・個人運営のサイトです</b>
-          遠賀町・遠賀町議会・「チームみらい」とは関係ありません。AI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          <b>遠賀町・遠賀町議会が公式に提供しているWEBサイトではありません</b>
+          遠賀町公式HPに公開されている情報を基にしたAI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          <span class="oss">なお、本WEBサイトはチームみらいが公開しているOSSを参考に作成されています。</span>
         </div>
       </div></div>
       <figcaption>
         <div class="screen-label"><b>一般質問ページ</b><span>/questions/2026-t3-q01-t1/</span></div>
         <ul class="rules">
-          <li><b>出どころを、書体と枠で3つに描き分ける。</b>点線＋赤しそ地＝AIが書いたもの、白いカードに明朝＝原典そのまま、丸ゴシック＝このサイトの言葉</li>
+          <li><b>出どころを、書体と枠で3つに描き分ける。</b>点線＋淡い青地＝AIが書いたもの、白いカードに明朝＝原典そのまま、丸ゴシック＝このサイトの言葉</li>
           <li>要約のすぐ下に必ず原文リンク。リンク先は会議録の<b>該当発言</b>（発言単位のアンカーがあるので1発言まで絞れる）</li>
           <li>1人が無関係な4テーマを質問することがあるので、ページは<b>質問事項ごと</b>に分ける</li>
           <li>議員を左、町側を右。色の差ではなく位置と記号で区別する</li>
@@ -590,10 +604,11 @@ h1{
         <div class="app-head">
           <span class="logomark">
             <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">
-              <path d="M3 25 C 10 25, 10 15, 17 15 S 24 25, 31 25 S 37 19, 37 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>
-              <circle cx="9" cy="21.5" r="3.1" fill="currentColor" opacity=".55"/>
-              <circle cx="20" cy="16.6" r="4.4" fill="currentColor"/>
-              <circle cx="31" cy="25" r="3.1" fill="currentColor" opacity=".55"/>
+              <path d="M4 30 C 12 30, 14 24, 22 24 S 32 27, 36 25" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".4"/>
+              <path d="M4 35 C 12 35, 14 29, 22 29 S 32 32, 36 30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".25"/>
+              <path d="M20 22 V 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M20 15 C 20 10, 24 7, 28 7 C 28 12, 24 15, 20 15 Z" fill="currentColor"/>
+              <path d="M20 19 C 20 15.5, 17 13.5, 14 13.5 C 14 17, 17 19, 20 19 Z" fill="currentColor" opacity=".55"/>
             </svg>
             <span class="logotype"><span class="n">みらい議会</span><span class="s">遠賀町版</span></span>
           </span>
@@ -630,8 +645,9 @@ h1{
           <div class="referral" style="margin-top:8px">（別の議案の例）この議案は所管ごとに<b>第一・第二常任委員会</b>に付託されました。委員会の会議録はHPに公開されていません。</div>
         </div>
         <div class="app-foot">
-          <b>非公式・個人運営のサイトです</b>
-          遠賀町・遠賀町議会・「チームみらい」とは関係ありません。AI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          <b>遠賀町・遠賀町議会が公式に提供しているWEBサイトではありません</b>
+          遠賀町公式HPに公開されている情報を基にしたAI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          <span class="oss">なお、本WEBサイトはチームみらいが公開しているOSSを参考に作成されています。</span>
         </div>
       </div></div>
       <figcaption>
@@ -651,10 +667,11 @@ h1{
         <div class="app-head">
           <span class="logomark">
             <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">
-              <path d="M3 25 C 10 25, 10 15, 17 15 S 24 25, 31 25 S 37 19, 37 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>
-              <circle cx="9" cy="21.5" r="3.1" fill="currentColor" opacity=".55"/>
-              <circle cx="20" cy="16.6" r="4.4" fill="currentColor"/>
-              <circle cx="31" cy="25" r="3.1" fill="currentColor" opacity=".55"/>
+              <path d="M4 30 C 12 30, 14 24, 22 24 S 32 27, 36 25" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".4"/>
+              <path d="M4 35 C 12 35, 14 29, 22 29 S 32 32, 36 30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".25"/>
+              <path d="M20 22 V 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M20 15 C 20 10, 24 7, 28 7 C 28 12, 24 15, 20 15 Z" fill="currentColor"/>
+              <path d="M20 19 C 20 15.5, 17 13.5, 14 13.5 C 14 17, 17 19, 20 19 Z" fill="currentColor" opacity=".55"/>
             </svg>
             <span class="logotype"><span class="n">みらい議会</span><span class="s">遠賀町版</span></span>
           </span>
@@ -690,8 +707,9 @@ h1{
           </div>
         </div>
         <div class="app-foot">
-          <b>非公式・個人運営のサイトです</b>
-          遠賀町・遠賀町議会・「チームみらい」とは関係ありません。AI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          <b>遠賀町・遠賀町議会が公式に提供しているWEBサイトではありません</b>
+          遠賀町公式HPに公開されている情報を基にしたAI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          <span class="oss">なお、本WEBサイトはチームみらいが公開しているOSSを参考に作成されています。</span>
         </div>
       </div></div>
       <figcaption>
@@ -699,7 +717,7 @@ h1{
         <ul class="rules">
           <li>タグはAIに分類させず、<b>通告書の質問事項の言葉</b>を人が作った語彙表と突き合わせて付ける。判断に迷うものは人が確認する</li>
           <li>棒は<b>全テーマ同じ色・同じ濃さ</b>。少ない項目を目立たせる色は使わない</li>
-          <li>「議論が足りていない」とは書かず、<b>件数だけを出して読み手に委ねる</b>。件数の多寡が議論の充実を表すわけではないと明記する</li>
+          <li>「議論が足りていない」とは書かず、<b>件数だけを出して読み手に委ねる</b>。何を足りないとするかは議員・町民の判断</li>
           <li>棒は件数の相対比較のためのもので、順位づけではない。並び順は件数順だが、順位番号は振らない</li>
         </ul>
       </figcaption>
@@ -714,24 +732,24 @@ h1{
 
     <div class="legend-grid">
       <section>
-        <h3>やわらかさは、色ではなく形で出す</h3>
-        <p>角の丸み（カード14px、吹き出し16px）、ゆったりした余白、やわらかい影。色数を増やさずに親しみを出しています。意味を持つ色は赤しそ色1色のままです。</p>
+        <h3>遠賀町公式HPに合わせた青</h3>
+        <p>公式ホームページの濃紺 <code>#17357D</code>、リンク青 <code>#0D59B7</code>、淡い水色地 <code>#E9F5F9</code> を実測し、その系統に寄せました。本サイトのアクセントは <code>#1F5FA8</code>、暗い画面では <code>#7DB3E8</code> です。</p>
+      </section>
+      <section>
+        <h3>公式と取り違えられないための言葉</h3>
+        <p>色を公式サイトに寄せた分、区別は言葉で付けます。ヘッダー右上に「非公式」を常時表示し、フッターで「公式に提供しているWEBサイトではありません」と明記します。</p>
+      </section>
+      <section>
+        <h3>やわらかさは色ではなく形で出す</h3>
+        <p>角の丸み（カード14px、吹き出し16px）、ゆったりした余白、やわらかい影。色数を増やさずに親しみを出しています。意味を持つ色は青1色のままです。</p>
       </section>
       <section>
         <h3>書体が出どころを示す</h3>
         <p>丸ゴシック＝このサイトの言葉、明朝＝会議録や通告書の原文、点線の枠＝AIが書いたもの。3つの出どころを、ラベルを読まなくても見分けられます。端末が持っているフォントだけで組んでいます。</p>
       </section>
       <section>
-        <h3>赤しそ色を選んだ理由</h3>
-        <p>遠賀町の特産である赤しそから取りました。行政サイトの定番である青から離れることで、公式サイトと見分けがつきます。<code>#8E4F6E</code>／暗い画面では <code>#D79CB8</code>。</p>
-      </section>
-      <section>
         <h3>会議録の記号をそのまま使う</h3>
         <p>会議録は発言の行頭に <code>○</code>議長 <code>◆</code>質問者 <code>◎</code>答弁者 の記号を付けています。検索システムの発言者区分と一対一で対応しており、こちらで解釈した結果ではありません。</p>
-      </section>
-      <section>
-        <h3>外部CDNを使わない</h3>
-        <p>フォントもライブラリも外部から読み込みません。読み込み待ちがなく、閲覧者の動きが外部サービスに送られることもありません。ロゴもインラインの図形です。</p>
       </section>
       <section>
         <h3>数を出すが、順位はつけない</h3>
@@ -742,10 +760,10 @@ h1{
     <div class="open-q">
       <h3>まだ決めていないこと</h3>
       <ol>
-        <li><b>ロゴはA・B・Cのどれか。</b>A案（議事の流れ）はサイトの機能そのものを表し、C案（川と芽）はいちばん親しみが出ます</li>
         <li><b>議員ページの作り。</b>上の案は「索引に徹する」形です。著作権の扱いを議会事務局に確認したうえで、発言の要約まで載せるかどうかを決めます</li>
         <li><b>テーマの語彙表。</b>いくつの分類にするか、誰がどう決めるか。現状は7分類で描いていますが根拠はありません</li>
-        <li><b>一覧の初期表示件数と検索の入口。</b>入口は「定例会・臨時会別／議員別／テーマ別／ことばで検索」の4つで描いています</li>
+        <li><b>一覧の初期表示件数。</b>入口は「定例会・臨時会別／議員別／テーマ別／ことばで検索」の4つで確定しています</li>
+        <li><b>OGP画像。</b>反転ロゴを使う想定ですが、共通画像1枚にするかページごとに作るかは未定です</li>
       </ol>
     </div>
 
