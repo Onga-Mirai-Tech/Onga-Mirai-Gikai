@@ -153,7 +153,7 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
   <nav>
     <a href="{root}">トップ</a>
     <a href="{root}meetings/">会議一覧</a>
-    <a href="{root}members/">町長・各議員の発言</a>
+    <a href="{root}members/">議員の発言</a>
     <a href="{root}about/">このサイトについて</a>
     <a href="http://iasb-sv.town.onga.lg.jp/voices/index.asp">遠賀町議会 会議録検索システム</a>
   </nav>
@@ -387,7 +387,7 @@ def render_index(site: Site) -> str:
         f"いまは令和元年からの{len(site.meetings)}会議を載せています。</p>"
         '<h2>さがす</h2><div class="chips">'
         '<a class="chip" href="meetings/">定例会・臨時会</a>'
-        '<a class="chip" href="members/">町長・各議員の発言</a>'
+        '<a class="chip" href="members/">議員の発言</a>'
         '<a class="chip" href="about/">このサイトについて</a>'
         "</div>"
         + latest_card
@@ -488,7 +488,7 @@ def render_member_index(site: Site) -> str:
 
     body = (
         crumb(depth)
-        + "<h1>町長・各議員の発言</h1>"
+        + "<h1>議員の発言</h1>"
         + '<p class="lead">このサイトが載せている会議録に発言のある議員です。'
         "現職かどうかは、いちばん新しい会議の出欠表に載っているかで分けています。"
         "並び順は最後に発言した日の新しい順で、順位づけではありません。</p>"
@@ -498,7 +498,7 @@ def render_member_index(site: Site) -> str:
         + (f'<h2>現職議員</h2><div class="stack">{cards(current)}</div>' if current else "")
         + (f'<h2>過去の議員</h2><div class="stack">{cards(past)}</div>' if past else "")
     )
-    return page(site, title="町長・各議員の発言", body=body, depth=depth,
+    return page(site, title="議員の発言", body=body, depth=depth,
                 description="遠賀町議会の議員の一覧。発言した一般質問と議案への索引です。")
 
 
