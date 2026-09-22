@@ -37,7 +37,7 @@ dist/       生成物（git管理外）
 |---|---|---|
 | P0 | 構造調査 | **完了**（2026-09-22） |
 | P1 | 会議録の収集 | **完了**（2026-09-23。全460日程を取得） |
-| P2 | 整形・発言者マスタ・議案抽出 | 未着手 |
+| P2 | 整形・発言者マスタ・議案抽出 | **進行中**（発言分割・発言者マスタ・議案抽出まで完了。一般質問のスレッド化が残り） |
 | P3 | 閲覧MVP（原文のみ） | - |
 | P4 | AI要約と検証 | - |
 | P5 | 議員ページ・検索・公開 | - |
@@ -59,7 +59,13 @@ python -m pipeline.fetch.voices
 # 一般質問通告書・審議案件結果のPDFを取得する
 python -m pipeline.fetch.town
 
-# パーサのテスト
+# 会議録を構造化して発言者マスタを作る（未判定は一覧に出る）
+python -m pipeline.parse.speakers
+
+# 会議録から議案を組み立てる
+python -m pipeline.parse.bills
+
+# テスト
 python -m unittest discover -s pipeline/tests -t .
 ```
 
