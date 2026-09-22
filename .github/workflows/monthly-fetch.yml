@@ -1,0 +1,83 @@
+name: monthly-fetch
+
+# 会議録と資料の取得を月1回。
+#
+# 取得マナー（CLAUDE.md）:
+#   - 日本時間の深夜帯に実行する
+#   - 1リクエストごとに3秒あける。並列にしない
+#   - 取得済みはスキップする
+# 実行時間の目安: 初回の一括は約500リクエスト × 3秒 ＝ 25分前後。
+# 2回目以降は数件なので1分もかからない。
+#
+# 取得した原文は private の Onga-Mirai-Gikai-data に入れる。
+# このリポジトリには state.json（何をどこから取ったかの記録）だけをPRで戻す。
+
+on:
+  schedule:
+    # 毎月2日 02:00 JST（= 前日 17:00 UTC）
+    - cron: "0 17 1 * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "取得件数の上限（動作確認用。空なら全件）"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: コードを取得
+        uses: actions/checkout@v4
+
+      - name: データを取得（private リポジトリ）
+        uses: actions/checkout@v4
+        with:
+          repository: Onga-Mirai-Tech/Onga-Mirai-Gikai-data
+          path: data
+          # 設定手順は docs/運用メモ.md を参照
+          ssh-key: ${{ secrets.DATA_REPO_DEPLOY_KEY }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 会議録を取得
+        run: |
+          python -m pipeline.fetch.voices --allow-daytime \
+            ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
+
+      - name: 通告書・審議案件結果を取得
+        run: python -m pipeline.fetch.town --refresh-index
+
+      - name: データをdataリポジトリへ push
+        working-directory: data
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "新しいデータはありません。"
+            exit 0
+          fi
+          git config user.name "onga-mirai-gikai-bot"
+          git config user.email "noreply@github.com"
+          git add -A
+          git commit -m "月次取得 $(date -u +%Y-%m-%d)"
+          git push
+
+      - name: state.json の更新をPRにする
+        uses: peter-evans/create-pull-request@v7
+        with:
+          add-paths: state.json
+          branch: monthly-fetch
+          commit-message: "月次取得の記録を更新"
+          title: "月次取得の記録を更新"
+          body: |
+            `pipeline/fetch` の月次実行で `state.json` が更新されました。
+
+            取得した原文は private の
+            [Onga-Mirai-Gikai-data](https://github.com/Onga-Mirai-Tech/Onga-Mirai-Gikai-data)
+            に入っています。差分の件数を確認してからマージしてください。
