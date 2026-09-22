@@ -1,6 +1,41 @@
 {
-  "last_checked_at": "2026-09-22T20:50:35+09:00",
+  "last_checked_at": "2026-09-23T00:05:37+09:00",
   "fetched": [
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=203&FINO=1&HATSUGENMODE=1&HYOUJIMODE=0&STYLE=0",
+      "path": "data/raw/voices/K_H17020701011.html",
+      "sha256": "31dd0a07bc25161ae0f66a6cf2490231dbf3c247707a400b7e5e7a5baf2ed5a9",
+      "bytes": 24067,
+      "fetched_at": "2026-09-23T00:05:22+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=203&FINO=2&HATSUGENMODE=1&HYOUJIMODE=0&STYLE=0",
+      "path": "data/raw/voices/K_H17030400011.html",
+      "sha256": "827651b35968a252a2d7b0d717d5dd356e276ab6b256b54c4d5dbee2fc00eee9",
+      "bytes": 62103,
+      "fetched_at": "2026-09-23T00:05:26+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=203&FINO=3&HATSUGENMODE=1&HYOUJIMODE=0&STYLE=0",
+      "path": "data/raw/voices/K_H17030700021.html",
+      "sha256": "e0dca6c88c7e65798d13270716cbed13710dd3358e5f8bacf372ca41422d81e4",
+      "bytes": 28908,
+      "fetched_at": "2026-09-23T00:05:29+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=203&FINO=4&HATSUGENMODE=1&HYOUJIMODE=0&STYLE=0",
+      "path": "data/raw/voices/K_H17030800031.html",
+      "sha256": "d909205060beea1880603596d5b66cf8aa1ed96a4c87b9bd0b803d327418df0b",
+      "bytes": 156590,
+      "fetched_at": "2026-09-23T00:05:34+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=203&FINO=5&HATSUGENMODE=1&HYOUJIMODE=0&STYLE=0",
+      "path": "data/raw/voices/K_H17030900041.html",
+      "sha256": "478530c47612b6cc79925e1868397d28dddd34d709f9cf57b2fcb3d4d49dc6ba",
+      "bytes": 7302,
+      "fetched_at": "2026-09-23T00:05:37+09:00"
+    },
     {
       "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=203&FINO=452&HATSUGENMODE=1&HYOUJIMODE=0&STYLE=0",
       "path": "data/raw/voices/K_R08012201011.html",
@@ -16,18 +51,312 @@
       "fetched_at": "2026-09-22T20:50:35+09:00"
     },
     {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2005",
+      "path": "data/raw/voices/_list/kgtp1-2005.html",
+      "sha256": "70e41451b29b872da4906e38f743d73a4bd2f6521278c2e1d155039ecd780f4f",
+      "bytes": 20787,
+      "fetched_at": "2026-09-23T00:02:46+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2006",
+      "path": "data/raw/voices/_list/kgtp1-2006.html",
+      "sha256": "a84b441ddf6b90db8b0809d4cd11f87e9bcf75d53309726db269f325aa06c0e3",
+      "bytes": 20068,
+      "fetched_at": "2026-09-23T00:02:49+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2007",
+      "path": "data/raw/voices/_list/kgtp1-2007.html",
+      "sha256": "7dfe15643b865991318b1debfc3c03aa5ee299c2458b7b910c8e3d523d06ccf1",
+      "bytes": 20068,
+      "fetched_at": "2026-09-23T00:02:53+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2008",
+      "path": "data/raw/voices/_list/kgtp1-2008.html",
+      "sha256": "4ae32417ac9a52d2701ae9d80a014dc78936e1999dc3a520b6e2e93648bc99c1",
+      "bytes": 19221,
+      "fetched_at": "2026-09-23T00:02:57+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2009",
+      "path": "data/raw/voices/_list/kgtp1-2009.html",
+      "sha256": "18ba19df026bc89aa6f31d8b1898ec48a1c23f46b08d004ee255413f8accff0d",
+      "bytes": 20087,
+      "fetched_at": "2026-09-23T00:03:01+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2010",
+      "path": "data/raw/voices/_list/kgtp1-2010.html",
+      "sha256": "9dede890affb51e619909d932ac0ee6ee564cda22f80762e9f0ffdc7c77d2b08",
+      "bytes": 19509,
+      "fetched_at": "2026-09-23T00:03:04+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2011",
+      "path": "data/raw/voices/_list/kgtp1-2011.html",
+      "sha256": "f0317cc9f68dccf39b618bb761c966c299568bae29941c47079813fc0b2edfca",
+      "bytes": 18639,
+      "fetched_at": "2026-09-23T00:03:07+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2012",
+      "path": "data/raw/voices/_list/kgtp1-2012.html",
+      "sha256": "8ed7a58b0b645ca3b64ce13da4b0f010f6e30016fe1c6990d24db338c122c117",
+      "bytes": 22191,
+      "fetched_at": "2026-09-23T00:03:11+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2013",
+      "path": "data/raw/voices/_list/kgtp1-2013.html",
+      "sha256": "d102a8da6a66180f1054513cbe2f9a710d500ba96c688ab000fa0b46a8832547",
+      "bytes": 23109,
+      "fetched_at": "2026-09-23T00:03:14+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2014",
+      "path": "data/raw/voices/_list/kgtp1-2014.html",
+      "sha256": "24d2605c67803ec0d709500dd95c32c7e08226fcee98c1bd69fa4d5aecdb06e1",
+      "bytes": 21285,
+      "fetched_at": "2026-09-23T00:03:18+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2015",
+      "path": "data/raw/voices/_list/kgtp1-2015.html",
+      "sha256": "b2ae29b8a53c9dcefacd0ba706719b6142d97051eb6d7a8ab73983317c86659d",
+      "bytes": 21285,
+      "fetched_at": "2026-09-23T00:03:22+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2016",
+      "path": "data/raw/voices/_list/kgtp1-2016.html",
+      "sha256": "73b6a92e392b627c0bbb41f4762d0ff380b5b7bbfaa23725c25758bde16af9f4",
+      "bytes": 21285,
+      "fetched_at": "2026-09-23T00:03:26+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2017",
+      "path": "data/raw/voices/_list/kgtp1-2017.html",
+      "sha256": "39ef643c1e4173a4e7fb1ec5a242a09bf8f325878eb5bb061bcb06436130f06f",
+      "bytes": 23109,
+      "fetched_at": "2026-09-23T00:03:29+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2018",
+      "path": "data/raw/voices/_list/kgtp1-2018.html",
+      "sha256": "1317afa79c992faca64f4301fbfa76b88713c82a2ea22a31681e6d0117106a16",
+      "bytes": 19525,
+      "fetched_at": "2026-09-23T00:03:33+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2019",
+      "path": "data/raw/voices/_list/kgtp1-2019.html",
+      "sha256": "f3957762589bde13e5618acf1ec56220906a8d2d5470741f20a282b12c34d534",
+      "bytes": 18654,
+      "fetched_at": "2026-09-23T00:03:36+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2020",
+      "path": "data/raw/voices/_list/kgtp1-2020.html",
+      "sha256": "fb53fedac41363b61704fb875be1c4be3326c97652377a22ecf50073d7c9f35a",
+      "bytes": 18552,
+      "fetched_at": "2026-09-23T00:03:40+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2021",
+      "path": "data/raw/voices/_list/kgtp1-2021.html",
+      "sha256": "fb12d97b14614d5ec48ffd813c795e5b977bd4e7fcd544c200089d566b211030",
+      "bytes": 21189,
+      "fetched_at": "2026-09-23T00:03:43+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2022",
+      "path": "data/raw/voices/_list/kgtp1-2022.html",
+      "sha256": "56388eb60331927900e50ad1b66769a5ab17f4a139bfbae7cce7c449e4d9a83f",
+      "bytes": 21189,
+      "fetched_at": "2026-09-23T00:03:47+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2023",
+      "path": "data/raw/voices/_list/kgtp1-2023.html",
+      "sha256": "36869919421cd110e49c634a79e26e9b2141e394c6592ee37984dae724593081",
+      "bytes": 21189,
+      "fetched_at": "2026-09-23T00:03:50+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2024",
+      "path": "data/raw/voices/_list/kgtp1-2024.html",
+      "sha256": "c02f61d4d852352acf8acbef43a347ffa6ff6d2fbad9992bfa93c14a87ad2d74",
+      "bytes": 21189,
+      "fetched_at": "2026-09-23T00:03:54+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2025",
+      "path": "data/raw/voices/_list/kgtp1-2025.html",
+      "sha256": "0594087e2ba493203557253d4f39618baafb81e1cb3fec884fa2801b69b0a435",
+      "bytes": 23007,
+      "fetched_at": "2026-09-23T00:03:58+09:00"
+    },
+    {
       "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=1&YEAR=2026",
       "path": "data/raw/voices/_list/kgtp1-2026.html",
       "sha256": "b260b69939d336aebb498c78a3c9782d45d230dbffa61e77af8d44a94488a488",
       "bytes": 12819,
-      "fetched_at": "2026-09-22T20:50:25+09:00"
+      "fetched_at": "2026-09-23T00:04:01+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2005",
+      "path": "data/raw/voices/_list/kgtp2-2005.html",
+      "sha256": "f49de2af738f4d71aa7b54500cba62c15b58201a223a93eb37985b51beec1955",
+      "bytes": 10532,
+      "fetched_at": "2026-09-23T00:04:05+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2006",
+      "path": "data/raw/voices/_list/kgtp2-2006.html",
+      "sha256": "fa0745323b8092f1460f7e0f20ceb3475213deed8030d516e8e48badb22fcab2",
+      "bytes": 8410,
+      "fetched_at": "2026-09-23T00:04:08+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2007",
+      "path": "data/raw/voices/_list/kgtp2-2007.html",
+      "sha256": "36f2ab7480ae1c1a8b98ad51f83c363312a8178856e05b9e6f9f58280d38dc33",
+      "bytes": 7714,
+      "fetched_at": "2026-09-23T00:04:11+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2008",
+      "path": "data/raw/voices/_list/kgtp2-2008.html",
+      "sha256": "a193d91455278b8ac553cf93bfd05322a848b67b4058fe0005926755114248ba",
+      "bytes": 9116,
+      "fetched_at": "2026-09-23T00:04:15+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2009",
+      "path": "data/raw/voices/_list/kgtp2-2009.html",
+      "sha256": "98075753f7542415ef229b594995a31192abc785f4f4c88b37051d690f866fe8",
+      "bytes": 9832,
+      "fetched_at": "2026-09-23T00:04:18+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2010",
+      "path": "data/raw/voices/_list/kgtp2-2010.html",
+      "sha256": "e7db2cfbc4db468bd7bf0503f02cb4f119733ecfe22d2d73abb3d96e604fb186",
+      "bytes": 9131,
+      "fetched_at": "2026-09-23T00:04:22+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2011",
+      "path": "data/raw/voices/_list/kgtp2-2011.html",
+      "sha256": "74b97af45d92571b5f67216081b7558dbde608b0f869cb9a3af68753af3a5920",
+      "bytes": 12103,
+      "fetched_at": "2026-09-23T00:04:26+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2012",
+      "path": "data/raw/voices/_list/kgtp2-2012.html",
+      "sha256": "d566f0a541a1eef66e43292945645de570977831d1fec1083ee14c158afa185f",
+      "bytes": 8418,
+      "fetched_at": "2026-09-23T00:04:30+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2013",
+      "path": "data/raw/voices/_list/kgtp2-2013.html",
+      "sha256": "41e29ee667a38e83db05209641dcc40e8f344e91af5fab5be563455012ca2246",
+      "bytes": 9131,
+      "fetched_at": "2026-09-23T00:04:33+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2014",
+      "path": "data/raw/voices/_list/kgtp2-2014.html",
+      "sha256": "061cc13d036bb6fff55855780497ca0553cff04cc9f9b8d7bd65b30885e67034",
+      "bytes": 9131,
+      "fetched_at": "2026-09-23T00:04:37+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2015",
+      "path": "data/raw/voices/_list/kgtp2-2015.html",
+      "sha256": "817fadd37889fa6cacf9bf74b63ad519bc233dc1f9e8f3a20232c6456851afc0",
+      "bytes": 11342,
+      "fetched_at": "2026-09-23T00:04:40+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2016",
+      "path": "data/raw/voices/_list/kgtp2-2016.html",
+      "sha256": "35c4f9eb5478b25186320a521a45e604439e877426be6b013dd07c9b3218d372",
+      "bytes": 9856,
+      "fetched_at": "2026-09-23T00:04:44+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2017",
+      "path": "data/raw/voices/_list/kgtp2-2017.html",
+      "sha256": "b14b8705b4d37d48821f4768540524c31dd9fe3d81f6ebb3fda7f79feddc8c0f",
+      "bytes": 11342,
+      "fetched_at": "2026-09-23T00:04:47+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2018",
+      "path": "data/raw/voices/_list/kgtp2-2018.html",
+      "sha256": "6e3377c06c2f4094c4e4451f522bbdd5679bb2bc5fb4af0b1971129475720638",
+      "bytes": 10598,
+      "fetched_at": "2026-09-23T00:04:51+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2019",
+      "path": "data/raw/voices/_list/kgtp2-2019.html",
+      "sha256": "578263747307785a83c4dd9dd1343441377bed1fdfb8f4fd8d37c29c476da600",
+      "bytes": 9134,
+      "fetched_at": "2026-09-23T00:04:54+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2020",
+      "path": "data/raw/voices/_list/kgtp2-2020.html",
+      "sha256": "22a74f7427e6136fa511fa7b66c48c499a85a89484737681f33f6a2d62c0a170",
+      "bytes": 10536,
+      "fetched_at": "2026-09-23T00:04:58+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2021",
+      "path": "data/raw/voices/_list/kgtp2-2021.html",
+      "sha256": "b5d9b41c4ca6e65f74b096b60b2a26616d1f3478c075222e85f22e1d5a4f58ed",
+      "bytes": 10536,
+      "fetched_at": "2026-09-23T00:05:01+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2022",
+      "path": "data/raw/voices/_list/kgtp2-2022.html",
+      "sha256": "58b991ced8e7a38ce64f5c5681db3048df2b91238e4b01d44e9349bf2462e73f",
+      "bytes": 11282,
+      "fetched_at": "2026-09-23T00:05:05+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2023",
+      "path": "data/raw/voices/_list/kgtp2-2023.html",
+      "sha256": "920f0578a4723d1b8b5feec3c12ea10ab2e04df70654ddf17f8b2d3cffee8630",
+      "bytes": 9802,
+      "fetched_at": "2026-09-23T00:05:08+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2024",
+      "path": "data/raw/voices/_list/kgtp2-2024.html",
+      "sha256": "fa281985123c098b3271db092a504bd304651b73fc47c207bc4426decd68f5c1",
+      "bytes": 9080,
+      "fetched_at": "2026-09-23T00:05:11+09:00"
+    },
+    {
+      "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2025",
+      "path": "data/raw/voices/_list/kgtp2-2025.html",
+      "sha256": "7fb8cb93a93d0e340d1134d32369f1d0518defb90ca6d56d1a1304bbf0d45193",
+      "bytes": 9802,
+      "fetched_at": "2026-09-23T00:05:15+09:00"
     },
     {
       "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=100&KENSAKU=0&SORT=0&KTYP=0,1,2,3&KGTP=2&YEAR=2026",
       "path": "data/raw/voices/_list/kgtp2-2026.html",
       "sha256": "71cff69d0000263fd34d0efc2c3097f7c376755221763e3331275442f8fc37fa",
       "bytes": 7672,
-      "fetched_at": "2026-09-22T20:50:28+09:00"
+      "fetched_at": "2026-09-23T00:05:18+09:00"
     }
   ]
 }
