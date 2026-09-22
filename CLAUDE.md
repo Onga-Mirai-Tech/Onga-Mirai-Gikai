@@ -5,7 +5,7 @@
 
 ## プロジェクトの前提
 
-- 公開URL: `https://miraigikai.onga-mirai-tech.<TLD>`（エックスサーバーのサブドメイン）
+- 公開URL: `https://miraigikai.onga-mirai-tech.com`（エックスサーバーのサブドメイン）
 - 立場: 個人の非公式サイト。遠賀町・遠賀町議会・「チームみらい」とは無関係。
 - 参考: みらい議会（福岡県版）`https://github.com/bakumon1107/mirai-gikai-fukuoka-pref`
   - **見た目・言葉づかいの参考のみ。コードは流用しない**（AGPL-3.0 のため）。
