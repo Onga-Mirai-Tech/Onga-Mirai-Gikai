@@ -107,6 +107,9 @@ class Site:
     bills: list[dict]
     speakers: dict[str, dict]
     meetings: dict[str, dict]
+    slugs: dict[str, str]
+    # 氏名 → その人が発言した議案（議案での発言の索引）
+    member_bills: dict[str, list[dict]]
 
     def voices_url(self, unid: str, huid: int | None = None) -> str:
         f = self.fino.get(unid)
@@ -148,6 +151,7 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
   <nav>
     <a href="{root}">トップ</a>
     <a href="{root}meetings/">会議一覧</a>
+    <a href="{root}members/">議員</a>
     <a href="{root}about/">このサイトについて</a>
     <a href="http://iasb-sv.town.onga.lg.jp/voices/index.asp">遠賀町議会 会議録検索システム</a>
   </nav>
@@ -202,7 +206,8 @@ def render_thread(site: Site, thread: dict) -> str:
         crumb(depth, (meeting["name"], f'meetings/{thread["meeting_id"]}/'), ("一般質問", ""))
         + f"<h1>{esc(title)}</h1>"
         + f'<p class="meta">{esc(thread["on"])} ／ {esc(thread["questioner_title"])}'
-        f'（{esc(thread["questioner"])}） ／ 通告順{thread["order"]}</p>'
+        f'（<a href="../../members/{member_slug(site, thread["questioner"])}/">'
+        f'{esc(thread["questioner"])}</a>） ／ 通告順{thread["order"]}</p>'
         + topics
         + "<h2>やりとり</h2>"
         + f'<div class="turns">{"".join(turns)}</div>'
@@ -380,6 +385,7 @@ def render_index(site: Site) -> str:
         f"いまは令和元年からの{len(site.meetings)}会議を載せています。</p>"
         '<h2>さがす</h2><div class="chips">'
         '<a class="chip" href="meetings/">定例会・臨時会から</a>'
+        '<a class="chip" href="members/">議員から</a>'
         '<a class="chip" href="about/">このサイトについて</a>'
         "</div>"
         + latest_card
@@ -424,6 +430,118 @@ def render_about(site: Site) -> str:
     )
     return page(site, title="このサイトについて", body=body, depth=depth,
                 description="個人運営の非公式サイトであること、守っているルール、データの出典。")
+
+
+def member_slug(site: Site, name: str) -> str:
+    """議員ページのURLに使う名前。
+
+    `masters/speakers.json` の `slugs` にローマ字があればそれを使う。
+    無ければ氏名をそのまま使う（URLとしては動くが、共有するとパーセント符号化されて
+    読みにくくなる。氏名の読みはこちらでは決められないので、人が入れる）。
+    """
+    return site.slugs.get(name, name)
+
+
+def members_in_scope(site: Site) -> list[dict]:
+    """議席を持ったことがある人。町長になった元議員も含む。"""
+    return sorted(
+        (s for s in site.speakers.values() if s["seats"]),
+        key=lambda s: (s["last"], s["name"]), reverse=True,
+    )
+
+
+def render_member_index(site: Site) -> str:
+    depth = 1
+    members = members_in_scope(site)
+    latest = max((s["last"] for s in members), default="")
+    current = [m for m in members if m["last"] >= latest[:4] + "-01-01"]
+    past = [m for m in members if m not in current]
+
+    def cards(group: list[dict]) -> str:
+        return "".join(
+            f'<a class="card" href="../members/{member_slug(site, m["name"])}/">'
+            f'<span class="t">{esc(m["name"])}</span>'
+            f'<span class="s">{esc("・".join(m["seats"]))}'
+            f' ／ {esc(m["first"])} 〜 {esc(m["last"])}'
+            + (f' ／ {esc(m["kind"])}' if m["kind"] != "議員" else "")
+            + "</span></a>"
+            for m in group
+        )
+
+    body = (
+        crumb(depth)
+        + "<h1>議員</h1>"
+        + '<p class="lead">このサイトが載せている会議録に発言のある議員です。'
+        "並び順は最後に発言した日の新しい順で、順位づけではありません。</p>"
+        + (f'<h2>最近発言のある議員</h2><div class="stack">{cards(current)}</div>' if current else "")
+        + (f'<h2>それ以前の議員</h2><div class="stack">{cards(past)}</div>' if past else "")
+    )
+    return page(site, title="議員", body=body, depth=depth,
+                description="遠賀町議会の議員の一覧。発言した一般質問と議案への索引です。")
+
+
+def render_member(site: Site, m: dict) -> str:
+    depth = 2
+    name = m["name"]
+    threads = sorted((t for t in site.threads if t["questioner"] == name),
+                     key=lambda t: t["on"], reverse=True)
+    bills = site.member_bills.get(name, [])
+
+    # 年別の件数。**その人のページの中だけ**で示し、議員間で並べた順位表は作らない。
+    per_year = collections.Counter()
+    for t in threads:
+        per_year[t["on"][:4]] += len(t["topics"]) or 1
+    counts = "".join(
+        f'<div class="card"><span class="t">{esc(y)}年</span>'
+        f'<span class="s">質問事項 {c}件</span></div>'
+        for y, c in sorted(per_year.items(), reverse=True)[:6]
+    )
+
+    q_cards = "".join(
+        f'<a class="card" href="../../questions/{thread_slug(t)}/">'
+        f'<span class="t">{esc(t["topics"][0]["title"] if t["topics"] else "一般質問")}</span>'
+        f'<span class="s">{esc(site.meetings[t["meeting_id"]]["name"])} ／ {esc(t["on"])}'
+        + (f' ／ 質問事項 {len(t["topics"])}件' if len(t["topics"]) > 1 else "")
+        + "</span></a>"
+        for t in threads
+    )
+
+    b_cards = "".join(
+        f'<a class="card" href="../../bills/{bill_slug(b["id"])}/">'
+        f'<span class="t">{esc(b["number"])}　{esc(b["title"])}</span>'
+        f'<span class="s">{esc(b["meeting"])} ／ {esc(b["decided_on"] or b["submitted_on"])}</span></a>'
+        for b in bills[:40]
+    )
+
+    roles = "".join(
+        f'<div class="row"><span>{esc(r["title"])}</span>'
+        f'<span>{esc(r["first"])} 〜 {esc(r["last"])}</span></div>'
+        for r in sorted(m["roles"], key=lambda r: r["first"])
+    )
+
+    note_index = (
+        '<div class="referral">このページは索引です。発言の内容は各ページでご覧ください。'
+        "賛否の記録は公表されていないため、このサイトでは扱っていません。</div>"
+    )
+    note_counts = (
+        '<div class="referral">この数は一般質問の質問事項の件数です。'
+        "ほかの議員と並べた順位づけはしていません。"
+        "回数の多い少ないは、議員の仕事ぶりを表すものではありません。</div>"
+    )
+
+    body = (
+        crumb(depth, ("議員", "members/"))
+        + f"<h1>{esc(name)}</h1>"
+        + f'<p class="meta">{esc("・".join(m["seats"]))} ／ {esc(m["first"])} 〜 {esc(m["last"])}'
+        + (f' ／ 現在は{esc(m["kind"])}' if m["kind"] != "議員" else "") + "</p>"
+        + (f'<h2>役職の記録</h2><div class="tally">{roles}</div>' if roles else "")
+        + (f'<h2>質問した回数</h2><div class="stack">{counts}</div>{note_counts}' if counts else "")
+        + (f'<h2>一般質問</h2><div class="stack">{q_cards}</div>' if q_cards else "")
+        + (f'<h2>議案での発言</h2><div class="stack">{b_cards}</div>' if b_cards else "")
+        + note_index
+    )
+    return page(site, title=name, body=body, depth=depth,
+                description=f'{name}議員の一般質問と議案での発言の索引。')
 
 
 # ---------------------------------------------------------------- 生成
@@ -486,8 +604,29 @@ def build(root: Path, out: Path, since: date, limit_meetings: int | None) -> Sit
 
     threads = [t for t in threads if t["meeting_id"] in meetings and t["unid"] in transcripts]
     bills = [b for b in bills if b["meeting_id"] in meetings]
+
+    # 議案での発言を、氏名から引けるようにする
+    member_bills: dict[str, list[dict]] = collections.defaultdict(list)
+    for b in bills:
+        seen: set[str] = set()
+        for ref in b["utterances"]:
+            tr = transcripts.get(ref["unid"])
+            if tr is None:
+                continue
+            u = next((x for x in tr.utterances if x.seq == ref["seq"]), None)
+            if u is None or u.kind not in ("質問者", "答弁者") or not u.name:
+                continue
+            if u.name not in seen:
+                seen.add(u.name)
+                member_bills[u.name].append(b)
+    for v in member_bills.values():
+        v.sort(key=lambda b: b["decided_on"] or b["submitted_on"], reverse=True)
+
+    overrides = json.loads((root / "masters" / "speakers.json").read_text(encoding="utf-8")) \
+        if (root / "masters" / "speakers.json").exists() else {}
     return Site(out=out, transcripts=transcripts, fino=fino, threads=threads,
-                bills=bills, speakers=speakers, meetings=meetings)
+                bills=bills, speakers=speakers, meetings=meetings,
+                slugs=overrides.get("slugs", {}), member_bills=dict(member_bills))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -519,10 +658,14 @@ def main(argv: list[str] | None = None) -> int:
         write(out / "questions" / thread_slug(t) / "index.html", render_thread(site, t))
     for b in site.bills:
         write(out / "bills" / bill_slug(b["id"]) / "index.html", render_bill(site, b))
+    write(out / "members" / "index.html", render_member_index(site))
+    for m in members_in_scope(site):
+        write(out / "members" / member_slug(site, m["name"]) / "index.html", render_member(site, m))
 
     pages = sum(1 for _ in out.rglob("index.html"))
     size = sum(f.stat().st_size for f in out.rglob("*") if f.is_file())
-    print(f"会議 {len(site.meetings)} / 一般質問 {len(site.threads)} / 議案 {len(site.bills)}")
+    print(f"会議 {len(site.meetings)} / 一般質問 {len(site.threads)} / 議案 {len(site.bills)}"
+          f" / 議員 {len(members_in_scope(site))}")
     print(f"→ {out.relative_to(root)} に {pages}ページ（{size / 1_048_576:.1f} MB）")
     return 0
 

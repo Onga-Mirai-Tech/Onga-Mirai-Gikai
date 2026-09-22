@@ -32,6 +32,34 @@ class TestSlugs(unittest.TestCase):
         self.assertEqual(a, "2026-t3-20260609-q01")
 
 
+class TestMemberSlug(unittest.TestCase):
+    def site(self, slugs):
+        return S.Site(out=None, transcripts={}, fino={}, threads=[], bills=[],
+                      speakers={}, meetings={}, slugs=slugs, member_bills={})
+
+    def test_uses_romaji_when_given(self):
+        # 氏名の読みはこちらでは決められないので、人が masters/speakers.json に入れる
+        self.assertEqual(S.member_slug(self.site({"野口久美子": "noguchi-kumiko"}), "野口久美子"),
+                         "noguchi-kumiko")
+
+    def test_falls_back_to_the_name(self):
+        self.assertEqual(S.member_slug(self.site({}), "野口久美子"), "野口久美子")
+
+
+class TestMembersInScope(unittest.TestCase):
+    def test_includes_a_former_member_who_became_mayor(self):
+        # 古野修：議員 → 議長 → 町長。議員ページは持つ。
+        site = S.Site(out=None, transcripts={}, fino={}, threads=[], bills=[],
+                      speakers={
+                          "古野修": {"name": "古野修", "kind": "町長", "seats": ["３番"],
+                                   "first": "2008-03-07", "last": "2026-06-09"},
+                          "井口正彦": {"name": "井口正彦", "kind": "執行部", "seats": [],
+                                    "first": "2020-01-01", "last": "2026-06-09"},
+                      },
+                      meetings={}, slugs={}, member_bills={})
+        self.assertEqual([m["name"] for m in S.members_in_scope(site)], ["古野修"])
+
+
 class TestParagraphs(unittest.TestCase):
     def test_splits_on_newlines(self):
         got = S.paragraphs("一点目です。\n　二点目です。")
