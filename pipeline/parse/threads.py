@@ -176,11 +176,83 @@ def split_threads(tr: T.Transcript, on: date) -> list[Thread]:
     return threads
 
 
-def build(paths: list[Path]) -> list[Thread]:
+_NOTICE_MEETING_RE = re.compile(r"(令和|平成|昭和)\s*([０-９0-9]+)\s*年.*?第\s*([０-９0-9]+)\s*回")
+_ERA_BASE = {"昭和": 1925, "平成": 1988, "令和": 2018}
+_ZEN = str.maketrans("０１２３４５６７８９", "0123456789")
+
+
+_FILE_LABEL_RE = re.compile(r"(令和|平成|昭和)\s*([０-９0-9]+)\s*年\s*([０-９0-9]+)\s*月")
+
+
+def notice_year_month(filename: str) -> str | None:
+    """通告書のファイル名「12067_令和8年6月.pdf」→「2026-06」。
+
+    **会議名では突き合わせられない。** 平成期の通告書は
+    「一般質問事項（遠賀町議会第４回９月定例会）」のように元号年が入っておらず、
+    西暦が決まらない。ファイル名は町HPのリンク文言から作っており、年月が入っている。
+    1つの通告書が1つの定例会に対応するので、年月で足りる。
+    """
+    m = _FILE_LABEL_RE.search(filename.translate(_ZEN))
+    if not m:
+        return None
+    era, yy, mm = m.groups()
+    return f"{_ERA_BASE[era] + int(yy)}-{int(mm):02d}"
+
+
+def load_notices(dir_path: Path, aliases: dict[str, str] | None = None) -> dict[str, list]:
+    """通告書を読んで、年月 → 通告の一覧にする。
+
+    `aliases` は発言者マスタ（`masters/speakers.json`）のもの。会議録と通告書で
+    氏名の表記が違うことがある（濱岡峯達 / 浜岡峯達）ので、同じ別名表をここでも使う。
+    """
+    from pipeline.parse import tsukokusho as TS
+
+    aliases = aliases or {}
+    out: dict[str, list] = collections.defaultdict(list)
+    for f in sorted(dir_path.glob("*.pdf")):
+        ym = notice_year_month(f.name)
+        if not ym:
+            continue
+        for n in TS.parse(f).notices:
+            n.questioner = aliases.get(n.questioner, n.questioner)
+            out[ym].append(n)
+    return out
+
+
+def attach_topics(
+    threads: list[Thread], notices: dict[str, list], aliases: dict[str, str] | None = None
+) -> None:
+    """スレッドに通告書の質問事項を結びつける。
+
+    年月と氏名で照合する。通告順は会議全体の通し番号で、一般質問が2日に
+    分かれるとスレッドのその日の順番とずれるため、順番では照合しない。
+
+    別名は**会議録側と通告書側の両方**に当てる。片側だけに当てると、
+    そろえたはずの氏名どうしが逆に食い違う。
+    """
+    aliases = aliases or {}
+    for t in threads:
+        t.questioner = aliases.get(t.questioner, t.questioner)
+        cands = [n for n in notices.get(t.on[:7], []) if n.questioner == t.questioner]
+        if not cands:
+            t.note = (t.note + " / " if t.note else "") + "通告書と対応づかず"
+            continue
+        t.topics = [{"no": x.no, "title": x.title} for x in cands[0].topics]
+        if len(cands) > 1:
+            t.note = (t.note + " / " if t.note else "") + "同じ議員の通告が複数あり先頭を採った"
+
+
+def build(
+    paths: list[Path],
+    notice_dir: Path | None = None,
+    aliases: dict[str, str] | None = None,
+) -> list[Thread]:
     out: list[Thread] = []
     for f in sorted(paths):
         tr = T.parse(decode_cp932(f.read_bytes()), f.stem)
         out.extend(split_threads(tr, unid_to_date(f.stem)))
+    if notice_dir and notice_dir.exists():
+        attach_topics(out, load_notices(notice_dir, aliases), aliases)
     return out
 
 
@@ -195,7 +267,10 @@ def main(argv: list[str] | None = None) -> int:
         print("data/raw/voices に会議録がありません。", file=sys.stderr)
         return 1
 
-    threads = build(files)
+    from pipeline.parse.speakers import load_overrides
+
+    aliases = load_overrides(root / "masters" / "speakers.json")["aliases"]
+    threads = build(files, root / "data" / "raw" / "tsukokusho", aliases)
     days = len({t.unid for t in threads})
     per_day = collections.Counter(collections.Counter(t.unid for t in threads).values())
     flagged = [t for t in threads if t.note]
@@ -205,9 +280,16 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  質問者の異なり: {len({t.questioner for t in threads})}人")
     print(f"  1スレッドあたりの発言数: 中央値 "
           f"{sorted(len(t.turns) for t in threads)[len(threads)//2]}")
+    with_topics = [t for t in threads if t.topics]
+    print(f"  通告書と対応づいた: {len(with_topics)}件"
+          f"（{len(with_topics) / len(threads) * 100:.1f}%）")
+    if with_topics:
+        n = sum(len(t.topics) for t in with_topics)
+        print(f"  質問事項の合計: {n}件（1スレッドあたり平均 {n / len(with_topics):.2f}）")
     if flagged:
-        print(f"  ⚠ 区切りの確認が要るスレッド: {len(flagged)}件 "
-              f"（{sorted({t.unid for t in flagged})}）")
+        print(f"  ⚠ 注記つきのスレッド: {len(flagged)}件")
+        for msg, c in collections.Counter(t.note for t in flagged).most_common(5):
+            print(f"      {c:>3}件  {msg}")
 
     if args.report:
         return 0

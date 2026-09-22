@@ -1,0 +1,4 @@
+# PDF解析。一般質問通告書と審議案件・結果は PDF でしか公開されていない。
+# 会議録の取得と解析（pipeline/fetch, pipeline/parse/transcript 等）は
+# 標準ライブラリだけで動く。この1つ以外は増やさない方針（docs/設計ドラフト.md）。
+pypdf==6.1.3

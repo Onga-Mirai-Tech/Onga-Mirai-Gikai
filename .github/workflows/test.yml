@@ -13,6 +13,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # 依存ライブラリは入れない。パーサは標準ライブラリだけで動く。
+      # 依存は PDF 解析の pypdf だけ。会議録の取得と解析は標準ライブラリで動く。
+      - name: 依存をインストール
+        run: pip install -r requirements.txt
       - name: パーサのテスト
         run: python -m unittest discover -s pipeline/tests -t . -v
