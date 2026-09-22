@@ -38,8 +38,8 @@ dist/       生成物（git管理外）
 | P0 | 構造調査 | **完了**（2026-09-22） |
 | P1 | 会議録の収集 | **完了**（2026-09-23。全460日程を取得） |
 | P2 | 整形・発言者マスタ・議案抽出 | **完了**（2026-09-23） |
-| P3 | 閲覧MVP（原文のみ） | 未着手 |
-| P4 | AI要約と検証 | - |
+| P3 | 閲覧MVP（原文のみ） | **完了**（2026-09-23。令和元年〜の820ページを生成） |
+| P4 | AI要約と検証 | 未着手 |
 | P5 | 議員ページ・検索・公開 | - |
 | P6 | 平成分の追加 | - |
 
@@ -73,6 +73,12 @@ python -m pipeline.parse.bills
 
 # 一般質問をスレッドに分ける（通告書の質問事項を結びつける）
 python -m pipeline.parse.threads
+
+# 静的サイトを生成する（dist/ に出る。git管理外）
+python -m pipeline.build.site
+
+# 生成したサイトを手元で見る
+python -m http.server 4173 --directory dist
 
 # テスト
 python -m unittest discover -s pipeline/tests -t .

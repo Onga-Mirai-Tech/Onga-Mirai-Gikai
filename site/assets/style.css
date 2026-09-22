@@ -1,0 +1,191 @@
+/* みらい議会 -遠賀町版-
+ *
+ * 外部からは何も読み込まない。フォントは端末が持っているものだけを使う。
+ * 配色は遠賀町公式ホームページに合わせた青系（docs/設計ドラフト.md「デザイン方針」）。
+ *
+ * 書体で出どころを示す:
+ *   --round  丸ゴシック … このサイトの言葉
+ *   --serif  明朝       … 会議録・通告書の原文
+ *   点線の枠            … AIが書いたもの（P4で使う）
+ *
+ * 意味を持つ色は青1色だけ。可否や賛否に色を割り当てない。
+ */
+
+:root {
+  --paper: #F3F8FC;
+  --surface: #FFFFFF;
+  --sunk: #E7F1F8;
+  --ink: #22303F;
+  --ink-soft: #48596B;
+  --muted: #7C8C9B;
+  --rule: #D7E5EF;
+  --rule-soft: #E8F0F6;
+  --accent: #1F5FA8;
+  --accent-deep: #16447A;
+  --accent-wash: #E4EFF9;
+  --shadow: 0 1px 2px rgba(28, 60, 96, .06), 0 10px 28px rgba(28, 60, 96, .09);
+  --shadow-sm: 0 1px 3px rgba(28, 60, 96, .08);
+  --round: "Hiragino Maru Gothic ProN", "Hiragino Maru Gothic Pro", "Yu Gothic Medium", "YuGothic", "Meiryo", system-ui, sans-serif;
+  --sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+  --serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
+  --wrap: 720px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121821;
+    --surface: #1A2230;
+    --sunk: #212B3A;
+    --ink: #E4EAF2;
+    --ink-soft: #BAC6D4;
+    --muted: #8695A5;
+    --rule: #2F3A4A;
+    --rule-soft: #27303E;
+    --accent: #7DB3E8;
+    --accent-deep: #A6CCF2;
+    --accent-wash: #1C2735;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 10px 28px rgba(0, 0, 0, .42);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, .4);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #121821;
+  --surface: #1A2230;
+  --sunk: #212B3A;
+  --ink: #E4EAF2;
+  --ink-soft: #BAC6D4;
+  --muted: #8695A5;
+  --rule: #2F3A4A;
+  --rule-soft: #27303E;
+  --accent: #7DB3E8;
+  --accent-deep: #A6CCF2;
+  --accent-wash: #1C2735;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 10px 28px rgba(0, 0, 0, .42);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.85;
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: anywhere;
+}
+
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---- ヘッダ ---- */
+.site-head {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule-soft);
+}
+.site-head .inner {
+  max-width: var(--wrap); margin: 0 auto;
+  padding: 10px 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.logo { display: flex; align-items: center; gap: 9px; color: var(--accent); text-decoration: none; }
+.logo svg { display: block; flex: none; }
+.logo .n { font-family: var(--round); font-weight: 600; font-size: 16px; color: var(--ink); letter-spacing: .03em; line-height: 1.2; }
+.logo .s { font-family: var(--round); font-size: 9px; color: var(--muted); letter-spacing: .12em; display: block; margin-top: 2px; }
+.badge-unofficial {
+  margin-left: auto; font-family: var(--round); font-size: 11px;
+  color: var(--accent); background: var(--accent-wash);
+  border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+}
+
+/* ---- 本体 ---- */
+main { max-width: var(--wrap); margin: 0 auto; padding: 20px 16px 48px; }
+.crumb { font-size: 12px; color: var(--muted); margin: 0 0 14px; line-height: 1.7; }
+.crumb a { color: var(--muted); }
+
+h1 { font-family: var(--round); font-size: clamp(21px, 4.4vw, 27px); font-weight: 600; line-height: 1.5; margin: 0 0 8px; text-wrap: balance; }
+h2 {
+  font-family: var(--round); font-size: 14px; font-weight: 600; color: var(--accent);
+  margin: 32px 0 12px; display: flex; align-items: center; gap: 8px;
+}
+h2::after { content: ""; flex: 1; height: 1px; background: var(--rule-soft); }
+.meta { font-size: 13px; color: var(--muted); margin: 0 0 16px; line-height: 1.8; font-variant-numeric: tabular-nums; }
+.lead { color: var(--ink-soft); margin: 0 0 18px; }
+
+/* ---- カード ---- */
+.stack { display: grid; gap: 10px; }
+.card {
+  display: block; background: var(--surface); border-radius: 14px;
+  padding: 14px 16px; box-shadow: var(--shadow-sm);
+  text-decoration: none; color: inherit;
+}
+.card .t { font-family: var(--round); font-size: 15px; line-height: 1.65; display: block; margin-bottom: 5px; }
+.card .s { font-size: 12.5px; color: var(--muted); line-height: 1.75; font-variant-numeric: tabular-nums; }
+.mark { font-family: var(--serif); color: var(--accent); margin-right: 5px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip {
+  font-family: var(--round); font-size: 12.5px; color: var(--ink-soft);
+  background: var(--sunk); border-radius: 999px; padding: 5px 13px;
+  text-decoration: none; white-space: nowrap;
+}
+.chip:hover { background: var(--accent-wash); color: var(--accent); }
+
+/* ---- 原文 ---- */
+.origin { background: var(--surface); border-radius: 14px; padding: 14px 16px; box-shadow: var(--shadow-sm); }
+.origin .tag { display: block; font-family: var(--round); font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+.origin p { margin: 0 0 .6em; font-family: var(--serif); font-size: 14.5px; line-height: 1.95; }
+.origin p:last-child { margin-bottom: 0; }
+
+/* ---- やりとり ---- */
+.turns { display: flex; flex-direction: column; gap: 14px; }
+.turn { max-width: 88%; }
+.turn.q { align-self: flex-start; }
+.turn.a { align-self: flex-end; }
+.turn.c { align-self: center; max-width: 100%; }
+.turn .who { font-family: var(--round); font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+.turn.a .who { text-align: right; }
+.bubble {
+  font-family: var(--serif); font-size: 14.5px; line-height: 1.95;
+  padding: 12px 15px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm);
+}
+.bubble p { margin: 0 0 .6em; }
+.bubble p:last-child { margin-bottom: 0; }
+.turn.q .bubble { border-bottom-left-radius: 5px; }
+.turn.a .bubble { border-bottom-right-radius: 5px; background: var(--sunk); box-shadow: none; }
+.turn.c .bubble {
+  background: none; box-shadow: none; text-align: center;
+  font-family: var(--round); font-size: 12.5px; color: var(--muted); padding: 2px 0;
+}
+
+/* ---- 議案 ---- */
+.kv { display: grid; grid-template-columns: 6.5em 1fr; gap: 7px 12px; font-size: 14px; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+.tally { background: var(--surface); border-radius: 14px; padding: 14px 16px; box-shadow: var(--shadow-sm); }
+.tally .row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; font-variant-numeric: tabular-nums; padding: 4px 0; }
+.tally .row + .row { border-top: 1px solid var(--rule-soft); }
+.tally .cap { font-size: 12px; color: var(--muted); margin: 10px 0 0; line-height: 1.8; }
+.referral { background: var(--sunk); border-radius: 14px; padding: 13px 16px; font-size: 13.5px; line-height: 1.85; color: var(--ink-soft); }
+.referral b { color: var(--ink); font-family: var(--round); }
+.referral + .referral { margin-top: 9px; }
+
+.source { display: inline-block; font-family: var(--round); font-size: 13px; color: var(--accent); text-decoration: none; margin-top: 12px; }
+.source::after { content: " →"; }
+
+.pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; font-family: var(--round); font-size: 13.5px; }
+
+/* ---- フッタ ---- */
+.site-foot {
+  margin-top: 40px; padding: 20px 16px 32px; background: var(--sunk);
+  font-size: 12.5px; line-height: 1.9; color: var(--muted);
+}
+.site-foot .inner { max-width: var(--wrap); margin: 0 auto; }
+.site-foot b { display: block; color: var(--ink-soft); font-family: var(--round); margin-bottom: 5px; }
+.site-foot .oss { display: block; margin-top: 8px; }
+.site-foot nav { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 14px; }
