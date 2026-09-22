@@ -1,0 +1,496 @@
+<title>みらい議会 遠賀町版</title>
+<style>
+:root{
+  --paper:#F7F7F4;
+  --surface:#FFFFFF;
+  --ink:#1B2430;
+  --ink-soft:#3C4654;
+  --muted:#67707C;
+  --rule:#D6D8D2;
+  --rule-soft:#E7E8E3;
+  --indigo:#2C4A6E;
+  --indigo-wash:#EDF1F6;
+  --board:#E9E9E4;
+  --shadow:0 1px 2px rgba(27,36,48,.06), 0 8px 24px rgba(27,36,48,.07);
+  --serif:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP",serif;
+  --sans:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#15181C;
+    --surface:#1D2126;
+    --ink:#E8E9E5;
+    --ink-soft:#C3C7C4;
+    --muted:#949B9F;
+    --rule:#353A40;
+    --rule-soft:#2A2F34;
+    --indigo:#9CBBDC;
+    --indigo-wash:#232B34;
+    --board:#101316;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#15181C;
+  --surface:#1D2126;
+  --ink:#E8E9E5;
+  --ink-soft:#C3C7C4;
+  --muted:#949B9F;
+  --rule:#353A40;
+  --rule-soft:#2A2F34;
+  --indigo:#9CBBDC;
+  --indigo-wash:#232B34;
+  --board:#101316;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--board);color:var(--ink);
+  font-family:var(--sans);font-size:15px;line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:40px 64px}
+
+/* ---- 紹介 ---- */
+.lede{max-width:62ch;margin-bottom:8px}
+.eyebrow{
+  font-size:11px;letter-spacing:.14em;color:var(--muted);
+  text-transform:uppercase;margin:0 0 10px
+}
+h1{
+  font-family:var(--serif);font-weight:600;
+  font-size:clamp(26px,5vw,38px);line-height:1.35;
+  margin:0 0 14px;text-wrap:balance;letter-spacing:.01em;
+}
+.lede p{margin:0 0 12px;color:var(--ink-soft)}
+.note{
+  border-left:3px solid var(--indigo);background:var(--indigo-wash);
+  padding:14px 16px;margin:24px 0 0;max-width:62ch;
+  font-size:13.5px;line-height:1.8;color:var(--ink-soft);
+}
+.note strong{color:var(--ink)}
+
+/* ---- 画面の並び ---- */
+.boards{
+  display:grid;gap:40px;margin-top:44px;
+  grid-template-columns:repeat(auto-fit,minmax(310px,1fr));
+  align-items:start;
+}
+.board{display:flex;flex-direction:column;gap:16px;min-width:0}
+.board > figcaption{order:2}
+.screen-label{
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  padding-bottom:8px;border-bottom:1px solid var(--rule);
+}
+.screen-label b{font-family:var(--serif);font-size:17px;font-weight:600}
+.screen-label span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rules{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:9px}
+.rules li{
+  font-size:12.5px;line-height:1.7;color:var(--ink-soft);
+  padding-left:18px;position:relative;
+}
+.rules li::before{
+  content:"";position:absolute;left:0;top:.65em;
+  width:9px;height:1px;background:var(--indigo);
+}
+
+/* ---- スマホ枠 ---- */
+.phone{
+  order:1;width:100%;max-width:340px;margin-inline:auto;
+  background:var(--surface);border:1px solid var(--rule);
+  border-radius:20px;box-shadow:var(--shadow);overflow:hidden;
+}
+.phone-inner{height:560px;overflow-y:auto;overscroll-behavior:contain;background:var(--paper)}
+
+/* ---- 画面内：共通 ---- */
+.app-head{
+  position:sticky;top:0;z-index:2;background:var(--surface);
+  border-bottom:1px solid var(--rule);padding:11px 14px;
+  display:flex;align-items:center;gap:9px;
+}
+.app-head .mark{
+  font-family:var(--serif);font-size:14px;font-weight:600;letter-spacing:.02em;
+}
+.app-head .unofficial{
+  margin-left:auto;font-size:10px;letter-spacing:.04em;color:var(--muted);
+  border:1px solid var(--rule);border-radius:3px;padding:2px 6px;white-space:nowrap;
+}
+.app-body{padding:14px}
+.crumb{font-size:11px;color:var(--muted);margin:0 0 10px;line-height:1.6}
+.h2{
+  font-family:var(--serif);font-size:18px;font-weight:600;line-height:1.5;
+  margin:0 0 4px;text-wrap:balance;
+}
+.h3{
+  font-size:11px;letter-spacing:.1em;color:var(--muted);
+  margin:22px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--rule-soft);
+}
+.meta{font-size:11.5px;color:var(--muted);margin:0 0 14px;font-variant-numeric:tabular-nums}
+
+/* ---- 画面内：一覧項目 ---- */
+.item{
+  display:block;padding:11px 0;border-bottom:1px solid var(--rule-soft);
+  text-decoration:none;color:inherit;
+}
+.item:last-child{border-bottom:0}
+.item .t{font-size:13.5px;line-height:1.6;display:block;margin-bottom:3px}
+.item .s{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.speaker-mark{
+  font-family:var(--serif);color:var(--indigo);
+  margin-right:4px;font-size:12px;
+}
+
+/* ---- 画面内：AI要約 / 原文 ---- */
+.summary{
+  border-left:2px dashed var(--indigo);padding:10px 0 10px 12px;margin:0 0 6px;
+}
+.summary p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-soft)}
+.ai-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:10px;letter-spacing:.08em;color:var(--indigo);
+  border:1px dashed var(--indigo);border-radius:3px;padding:1px 6px;
+  margin-bottom:7px;
+}
+.source{
+  display:inline-block;font-size:11px;color:var(--indigo);
+  text-decoration:none;border-bottom:1px solid currentColor;
+  margin-top:8px;padding-bottom:1px;
+}
+.origin{
+  border-left:2px solid var(--rule);padding:8px 0 8px 12px;margin:10px 0 0;
+}
+.origin p{margin:0;font-size:12.5px;line-height:1.85}
+
+/* ---- 画面内：やりとり ---- */
+.turns{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+.turn{max-width:86%}
+.turn.q{align-self:flex-start}
+.turn.a{align-self:flex-end}
+.turn .who{
+  font-size:10.5px;color:var(--muted);margin-bottom:4px;
+  display:flex;align-items:center;gap:4px;
+}
+.turn.a .who{justify-content:flex-end}
+.bubble{
+  font-size:12.5px;line-height:1.8;padding:10px 12px;border-radius:12px;
+  border:1px solid var(--rule);background:var(--surface);
+}
+.turn.q .bubble{border-bottom-left-radius:3px}
+.turn.a .bubble{border-bottom-right-radius:3px;background:var(--indigo-wash);border-color:transparent}
+
+/* ---- 画面内：議案 ---- */
+.kv{
+  display:grid;grid-template-columns:5.5em 1fr;gap:5px 10px;
+  font-size:12.5px;margin:0 0 4px;
+}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-variant-numeric:tabular-nums}
+.tally{
+  border:1px solid var(--rule);border-radius:4px;padding:10px 12px;margin-top:12px;
+  font-size:12px;line-height:1.75;
+}
+.tally .row{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
+.tally .cap{font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.6}
+.referral{
+  border:1px solid var(--rule);border-left:3px solid var(--muted);
+  background:var(--surface);padding:10px 12px;margin-top:12px;
+  font-size:12px;line-height:1.75;color:var(--ink-soft);
+}
+.referral b{color:var(--ink)}
+
+/* ---- 画面内：フッター ---- */
+.app-foot{
+  border-top:1px solid var(--rule);margin-top:24px;padding:13px 14px 18px;
+  font-size:10.5px;line-height:1.85;color:var(--muted);background:var(--surface);
+}
+.app-foot b{display:block;color:var(--ink-soft);font-weight:600;margin-bottom:3px}
+
+/* ---- 凡例 ---- */
+.legend{
+  margin-top:56px;border-top:1px solid var(--rule);padding-top:28px;
+}
+.legend h2{
+  font-family:var(--serif);font-size:20px;font-weight:600;margin:0 0 6px;
+}
+.legend > p{margin:0 0 22px;color:var(--ink-soft);font-size:14px;max-width:62ch}
+.legend-grid{
+  display:grid;gap:22px 32px;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+}
+.legend-grid section{min-width:0}
+.legend-grid h3{
+  font-size:12px;letter-spacing:.08em;color:var(--muted);
+  margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--rule-soft);
+}
+.legend-grid p{margin:0;font-size:13px;line-height:1.8;color:var(--ink-soft)}
+.legend-grid code{
+  font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;
+  background:var(--indigo-wash);padding:1px 4px;border-radius:3px;
+}
+.open-q{
+  margin-top:34px;border:1px solid var(--rule);border-radius:6px;
+  padding:18px 20px;background:var(--surface);
+}
+.open-q h3{font-family:var(--serif);font-size:15px;font-weight:600;margin:0 0 10px}
+.open-q ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.open-q li{font-size:13px;line-height:1.75;color:var(--ink-soft)}
+.foot{
+  margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:12px;line-height:1.85;color:var(--muted);max-width:62ch;
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+a:focus-visible,.item:focus-visible{outline:2px solid var(--indigo);outline-offset:2px;border-radius:2px}
+</style>
+
+<div class="wrap">
+
+  <div class="lede">
+    <p class="eyebrow">たたき台 ／ 2026-09-22</p>
+    <h1>みらい議会 -遠賀町版-<br>画面デザイン案</h1>
+    <p>遠賀町議会の会議録をもとに、議事の流れと「誰が何を言い、町がどう答えたか」を見せる個人運営の非公式サイトです。以下は主要な3画面のたたき台で、実際の会議録（令和8年第3回定例会）の内容をそのまま当てはめています。</p>
+    <p>デザイン上の判断はすべて、このプロジェクトが自分に課しているルールから導いています。いちばん効いているのは<strong>「議員・会派・町に対する評価、点数付け、ランキング、賛否の色分けをしない」</strong>という一条です。</p>
+  </div>
+
+  <div class="note">
+    <strong>色を1色しか使っていない理由。</strong>
+    可否や賛否に色を割り当てると、それだけで「よい／わるい」の含みが生まれます。意味を持たせる色は藍（遠賀川の色）1色だけにして、賛成・反対・可決・否決はすべて同じ字色で扱っています。話者の区別には、会議録がもともと使っている記号
+    <span class="speaker-mark">○</span>議長・<span class="speaker-mark">◆</span>議員・<span class="speaker-mark">◎</span>答弁者 をそのまま流用しました。原典と1対1で対応するので、こちらの解釈が混ざりません。
+  </div>
+
+  <div class="boards">
+
+    <!-- ===== 1. 会議ページ ===== -->
+    <figure class="board">
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="app-head">
+            <span class="mark">みらい議会</span>
+            <span class="unofficial">非公式・個人運営</span>
+          </div>
+          <div class="app-body">
+            <p class="crumb">トップ ＞ 会議一覧 ＞ 令和8年第3回定例会</p>
+            <h2 class="h2">令和8年 第3回 定例会</h2>
+            <p class="meta">2026年6月4日 〜 6月15日 ／ 全4日</p>
+
+            <p class="h3">この定例会のあらまし</p>
+            <div class="kv">
+              <dt>一般質問</dt><dd>3人・9テーマ</dd>
+              <dt>議案</dt><dd>11件（原案可決9・承認2）</dd>
+              <dt>委員会付託</dt><dd>7件</dd>
+            </div>
+
+            <p class="h3">一般質問</p>
+            <a class="item" href="#">
+              <span class="t"><span class="speaker-mark">◆</span>野口 久美子 議員</span>
+              <span class="s">健康増進法に基づく敷地内禁煙／職員の喫煙者の健康管理／がん検診情報の把握／こども家庭センター</span>
+            </a>
+            <a class="item" href="#">
+              <span class="t"><span class="speaker-mark">◆</span>萩尾 修身 議員</span>
+              <span class="s">学力の二極化／幼児教育と小学校教育の接続／小中学生の視力低下</span>
+            </a>
+            <a class="item" href="#">
+              <span class="t"><span class="speaker-mark">◆</span>田代 順二 議員</span>
+              <span class="s">遠賀町公営住宅等長寿命化計画／デマンドバス有償実証運行事業</span>
+            </a>
+
+            <p class="h3">議案</p>
+            <a class="item" href="#">
+              <span class="t">議案第42号　遠賀町国民健康保険税条例の一部改正について</span>
+              <span class="s">6月8日 ／ 承認　・　討論あり</span>
+            </a>
+            <a class="item" href="#">
+              <span class="t">議案第44号　遠賀町町道路線の認定について</span>
+              <span class="s">6月15日 ／ 原案可決　・　第一常任委員会に付託</span>
+            </a>
+            <a class="item" href="#">
+              <span class="t">議案第49号　令和8年度遠賀町一般会計補正予算（第1号）</span>
+              <span class="s">6月15日 ／ 原案可決　・　第一・第二常任委員会に付託</span>
+            </a>
+          </div>
+          <div class="app-foot">
+            <b>非公式・個人運営のサイトです</b>
+            遠賀町・遠賀町議会・「チームみらい」とは関係ありません。AI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <div class="screen-label"><b>会議ページ</b><span>/meetings/2026-t3/</span></div>
+        <ul class="rules">
+          <li>あらましはAIに書かせず、下位の要約から機械的に組み立てる。要約の要約は原文から2段離れ、誤りが増幅するため</li>
+          <li>一般質問は議員名ではなく<b>質問事項</b>で並べる。テーマは議員本人が出した一般質問通告書の文言をそのまま使う</li>
+          <li>議案は可否を色で塗り分けず、字で書く</li>
+        </ul>
+      </figcaption>
+    </figure>
+
+    <!-- ===== 2. 一般質問ページ ===== -->
+    <figure class="board">
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="app-head">
+            <span class="mark">みらい議会</span>
+            <span class="unofficial">非公式・個人運営</span>
+          </div>
+          <div class="app-body">
+            <p class="crumb">令和8年第3回定例会 ＞ 一般質問 ＞ 野口 久美子 議員</p>
+            <h2 class="h2">健康増進法に基づく<br>敷地内禁煙について</h2>
+            <p class="meta">2026年6月9日 ／ 通告順1・質問事項1 ／ 質問の相手：町長</p>
+
+            <div class="summary">
+              <span class="ai-tag">AI要約</span>
+              <p>庁舎敷地内の喫煙場所の有無と運用について質問。町は、敷地内のマイクロバス車庫の北側1か所に喫煙場所を設けていると答弁。庶務財政課長は、屋上の喫煙所は平成30年7月の健康増進法の一部改正を受けて場所を変更したと説明した。</p>
+              <a class="source" href="#">原文（会議録）でこのやりとりを読む →</a>
+            </div>
+
+            <p class="h3">通告された質問の要旨</p>
+            <div class="origin">
+              <p>⑴ 第一種施設である学校、病院、行政機関は、敷地内全面禁煙化が義務づけられているが、現在本町庁舎敷地内に喫煙場所を設けているか尋ねる。<br>⑵ 役場職員の喫煙者は何人いるか尋ねる。<br>⑶ 喫煙場所の運用および利用状況について尋ねる。</p>
+            </div>
+
+            <p class="h3">やりとり</p>
+            <div class="turns">
+              <div class="turn q">
+                <div class="who"><span class="speaker-mark">◆</span>2番議員（野口久美子）</div>
+                <div class="bubble">ただいま、議長の許可が出ましたので、6月議会の一般質問を通告順に従って行います。…</div>
+              </div>
+              <div class="turn a">
+                <div class="who"><span class="speaker-mark">◎</span>町長（古野修）</div>
+                <div class="bubble">ご質問にお答えを致します。庁舎敷地内の喫煙場所につきましては、庁舎敷地内のマイクロバス車庫…</div>
+              </div>
+              <div class="turn q">
+                <div class="who"><span class="speaker-mark">◆</span>2番議員（野口久美子）</div>
+                <div class="bubble">庁舎敷地内のマイクロバスの車庫の北側1カ所というのは、私も車を駐車したりしますので…</div>
+              </div>
+              <div class="turn a">
+                <div class="who"><span class="speaker-mark">◎</span>庶務財政課長（吉田光男）</div>
+                <div class="bubble">屋上の喫煙所につきましては、平成30年の7月の健康増進法一部改正に基づきまして、新たにマイクロバスの車庫の北側と…</div>
+              </div>
+            </div>
+            <a class="source" href="#">この日の会議録をすべて読む →</a>
+          </div>
+          <div class="app-foot">
+            <b>非公式・個人運営のサイトです</b>
+            遠賀町・遠賀町議会・「チームみらい」とは関係ありません。AI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <div class="screen-label"><b>一般質問ページ</b><span>/questions/2026-t3-q01-t1/</span></div>
+        <ul class="rules">
+          <li><b>点線の罫はAIが書いたもの、実線の罫は原典そのまま。</b>ラベルだけでなく罫の形でも区別する</li>
+          <li>要約のすぐ下に必ず原文リンクを置く。リンク先は会議録の<b>該当発言</b>（発言単位のアンカーがあるので1発言まで絞り込める）</li>
+          <li>1人の議員が無関係な4テーマを質問することがあるので、ページは<b>質問事項ごと</b>に分ける</li>
+          <li>議員を左、町側を右。色の差ではなく位置と記号で区別する</li>
+        </ul>
+      </figcaption>
+    </figure>
+
+    <!-- ===== 3. 議案ページ ===== -->
+    <figure class="board">
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="app-head">
+            <span class="mark">みらい議会</span>
+            <span class="unofficial">非公式・個人運営</span>
+          </div>
+          <div class="app-body">
+            <p class="crumb">令和8年第3回定例会 ＞ 議案 ＞ 議案第42号</p>
+            <h2 class="h2">議案第42号</h2>
+            <p class="meta" style="margin-bottom:10px">専決処分の承認を求めることについて（専決第8号）遠賀町国民健康保険税条例の一部改正について</p>
+
+            <dl class="kv">
+              <dt>提出者</dt><dd>町長</dd>
+              <dt>議決年月日</dt><dd>2026年6月8日</dd>
+              <dt>議決結果</dt><dd>承認</dd>
+            </dl>
+
+            <div class="tally">
+              <div class="row"><span>賛成</span><span>11</span></div>
+              <div class="row"><span>反対</span><span>1</span></div>
+              <div class="row"><span>出席議員</span><span>13</span></div>
+              <p class="cap">起立採決。会議録に記載があるのは人数までで、どの議員が賛成・反対したかは公表されていません。このサイトでは推測しません。</p>
+            </div>
+
+            <p class="h3">質疑・討論</p>
+            <div class="summary">
+              <span class="ai-tag">AI要約</span>
+              <p>質疑はなし。田代議員が反対の立場で討論し、基礎課税額の引き上げと子ども・子育て支援金分の新設により賦課限度額が109万円から113万円に上がる点を挙げ、一般会計からの繰り入れを増やしてでも引き下げるべきだと述べた。軽減対象世帯が拡大される点は評価すべき点として挙げた。</p>
+              <a class="source" href="#">原文（会議録）でこの討論を読む →</a>
+            </div>
+
+            <p class="h3">委員会付託</p>
+            <div class="referral">
+              この議案は、会議規則第39条第3項の規定により<b>委員会付託を省略</b>し、本会議で採決されました。
+            </div>
+            <div class="referral" style="margin-top:8px">
+              （別の議案の例）この議案は所管ごとに<b>第一・第二常任委員会</b>に付託されました。委員会の会議録はHPに公開されていません。
+            </div>
+          </div>
+          <div class="app-foot">
+            <b>非公式・個人運営のサイトです</b>
+            遠賀町・遠賀町議会・「チームみらい」とは関係ありません。AI要約を含みます。正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <div class="screen-label"><b>議案ページ</b><span>/bills/2026-t3-b42/</span></div>
+        <ul class="rules">
+          <li>賛成・反対の数字を<b>同じ字色・同じ大きさ</b>で並べる。棒グラフにも色分けにもしない</li>
+          <li>個人別の賛否は会議録にも町の公表資料にもないため扱わない。<b>「扱っていない」ことを画面に書く</b></li>
+          <li>付託は「委員会名つき付託／分割付託／付託省略」の3通りを書き分ける。委員会の記録が<b>HPに</b>ないとだけ述べ、情報公開請求など他の経路は否定しない</li>
+          <li>質疑も討論もない議案は要約を作らず、その事実だけ書く</li>
+        </ul>
+      </figcaption>
+    </figure>
+
+  </div>
+
+  <!-- ===== 凡例 ===== -->
+  <div class="legend">
+    <h2>デザインを決めた制約</h2>
+    <p>見た目の好みではなく、プロジェクトのルールと、遠賀町議会の会議録の実物から決めています。</p>
+
+    <div class="legend-grid">
+      <section>
+        <h3>外部CDNを使わない</h3>
+        <p>フォントもライブラリも外部から読み込みません。見出しは端末が持っている明朝系、本文はゴシック系のシステムフォントです。読み込み待ちがなく、閲覧者の動きが外部サービスに送られることもありません。</p>
+      </section>
+      <section>
+        <h3>会議録の記号をそのまま使う</h3>
+        <p>遠賀町議会の会議録は発言の行頭に <code>○</code>議長 <code>◆</code>質問者 <code>◎</code>答弁者 の記号を付けています。これは会議録検索システムの発言者区分と一対一で対応しており、こちらで解釈した結果ではありません。そのまま画面の記号に使っています。</p>
+      </section>
+      <section>
+        <h3>点線はAI、実線は原典</h3>
+        <p>AIが書いた文章は点線の罫と「AI要約」のラベル、会議録や通告書そのままの文章は実線の罫で囲みます。ラベルの文字を読まなくても、罫の形で出どころが分かります。</p>
+      </section>
+      <section>
+        <h3>スマホを最優先する</h3>
+        <p>本文16px前後、行間1.75〜1.85。日本語の長文を縦に読む前提で組んでいます。3画面はいずれも幅340pxで破綻しません。</p>
+      </section>
+      <section>
+        <h3>明るい画面と暗い画面の両方</h3>
+        <p>端末の設定に合わせて紙白と夜色が切り替わります。どちらでも藍のアクセントが読めるよう、明度を別々に調整しています。</p>
+      </section>
+      <section>
+        <h3>評価をしない</h3>
+        <p>ランキング、点数、賛否の色分け、「多い／少ない」の言い回しを一切使いません。並べ順は日付・議案番号・通告順といった機械的なものだけです。</p>
+      </section>
+    </div>
+
+    <div class="open-q">
+      <h3>まだ決めていないこと</h3>
+      <ol>
+        <li>サイト名のロゴの扱い。現状は明朝の文字組みだけで、図案化していません</li>
+        <li>議員ページ（特定の議員の発言を集めて並べる画面）を作るかどうか。著作権法上の扱いを議会事務局に確認したうえで判断します</li>
+        <li>テーマ別ページ（子育て・防災など）のタグをどう付けるか。AIに分類させると評価が混ざる恐れがあるため、通告書の質問事項の文言から機械的に拾う方法を検討中です</li>
+        <li>一覧の初期表示件数と、検索の入口の置き方</li>
+      </ol>
+    </div>
+
+    <p class="foot">
+      画面内の文章は、令和8年第3回遠賀町議会6月定例会の会議録および一般質問通告書からの引用です。AI要約として表示している文章は、この案を示すためにこちらで作成した見本であり、実際の生成物ではありません。<br>
+      出典：遠賀町議会 会議録検索システム（VOICES）／遠賀町公式ホームページ「一般質問通告書」
+    </p>
+  </div>
+
+</div>
