@@ -1,0 +1,14 @@
+{
+  "_readme": [
+    "発言者マスタの手動修正。pipeline/parse/speakers.py が読む。",
+    "未判定の一覧は data/normalized/speakers_unresolved.md に出る。",
+    "aliases  : 会議録の表記 → 正とする氏名。表記ゆれを統合する",
+    "external : 名簿に載らない立場の発言者（参考人・受章者・監査委員など）",
+    "slugs    : URLに使うローマ字。/members/{slug}/ になる（P5で使う）",
+    "notes    : 人が書き残すメモ。生成物にそのまま載る"
+  ],
+  "aliases": {},
+  "external": [],
+  "slugs": {},
+  "notes": {}
+}
