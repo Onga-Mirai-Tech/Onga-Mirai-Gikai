@@ -87,6 +87,15 @@ class TestObserve(unittest.TestCase):
         self.assertEqual(got.match, S.MATCH_SEAT)
         self.assertEqual(got.name, "仲摩靖浩")
 
+    def test_alias_applies_to_the_roster_too(self):
+        # 会議録は出欠表の中でも表記が揺れている（平見光司274回／平見光二24回）。
+        # 発言ラベルだけ寄せて名簿を放置すると、逆に照合できなくなる。
+        header = HEADER.replace("仲　摩　靖　浩", "平　見　光　二")
+        tr = parse(header, "◆１番議員（平見光司）　質問します。")
+        self.assertEqual(self.observe(tr)[0].match, S.MATCH_NONE)
+        got = self.observe(tr, aliases={"平見光二": "平見光司"})[0]
+        self.assertEqual(got.match, S.MATCH_SEAT)
+
 
 class TestClassify(unittest.TestCase):
     def role(self, title, last):

@@ -112,21 +112,22 @@ def classify(roles: list[Role]) -> str:
     return "議員" if ever_seat else "その他"
 
 
-def build_roster(paths: list[Path]) -> dict[str, set[str]]:
+def build_roster(paths: list[Path], aliases: dict[str, str] | None = None) -> dict[str, set[str]]:
     """全期間の名簿を作る（氏名 → その人に付いていた職の集合）。
 
     臨時会では説明員欄にその職の記載がないことがある。当日のヘッダだけで照合すると
     実在する課長が「未照合」に落ちるので、全期間の名簿も見る。
     """
+    aliases = aliases or {}
     roster: dict[str, set[str]] = collections.defaultdict(set)
     for f in paths:
         tr = T.parse(decode_cp932(f.read_bytes()), f.stem)
         for p in tr.executives + tr.clerks:
-            roster[p.name].add(p.title)
+            roster[aliases.get(p.name, p.name)].add(p.title)
         for a in tr.attendance:
-            roster[a.name].add("議員")
+            roster[aliases.get(a.name, a.name)].add("議員")
         if tr.chair:
-            roster[tr.chair.name].add("議長")
+            roster[aliases.get(tr.chair.name, tr.chair.name)].add("議長")
     return roster
 
 
@@ -139,12 +140,17 @@ def observe(
 ) -> list[Observation]:
     """1日分の発言を、その日のヘッダと突き合わせる。"""
     roster_all = roster_all or {}
-    seats = {a.seat.strip("　 "): a.name for a in tr.attendance}
-    members = {a.name for a in tr.attendance}
-    exec_by_title = {e.title: e.name for e in tr.executives}
-    roster = members | set(exec_by_title.values()) | {c.name for c in tr.clerks}
+    # 別名は**名簿側にも当てる**。会議録は出欠表の中でも表記が揺れており
+    # （平見光司274回／平見光二24回）、発言ラベルだけ寄せても照合できない。
+    def canon(name: str) -> str:
+        return aliases.get(name, name)
+
+    seats = {a.seat.strip("　 "): canon(a.name) for a in tr.attendance}
+    members = {canon(a.name) for a in tr.attendance}
+    exec_by_title = {e.title: canon(e.name) for e in tr.executives}
+    roster = members | set(exec_by_title.values()) | {canon(c.name) for c in tr.clerks}
     if tr.chair:
-        roster.add(tr.chair.name)
+        roster.add(canon(tr.chair.name))
 
     out: list[Observation] = []
     for u in tr.utterances:
@@ -268,7 +274,7 @@ def main(argv: list[str] | None = None) -> int:
               file=sys.stderr)
         return 1
 
-    roster_all = build_roster(files)
+    roster_all = build_roster(files, aliases)
     for f in files:
         tr = T.parse(decode_cp932(f.read_bytes()), f.stem)
         observations.extend(observe(tr, unid_to_date(f.stem), aliases, external, roster_all))
