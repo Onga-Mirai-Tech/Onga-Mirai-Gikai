@@ -16,3 +16,12 @@ venv/
 .DS_Store
 .idea/
 .vscode/
+
+# 取得した原文とその派生物は、このリポジトリに含めない。
+# 町・議会の著作物であり、遠賀町公式サイトの著作権方針は
+# 「著作権法で認められた場合を除き、無断で複製・転用することはできません」としている。
+# 実体は private の Onga-Mirai-Gikai-data リポジトリで管理する。
+# 議会事務局の了解が取れたら、そちらを public に切り替える。
+data/raw/
+data/normalized/
+data/summaries/
