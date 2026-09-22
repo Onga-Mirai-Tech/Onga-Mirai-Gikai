@@ -360,6 +360,26 @@ def render_meeting_index(site: Site) -> str:
                 description="遠賀町議会の定例会・臨時会の一覧。")
 
 
+# 「令和元年」の「元」は数字ではない。会議録がそう書いているので、そのまま受ける。
+_ERA_HEAD_RE = re.compile(r"^(令和|平成|昭和)(元|\d+)年")
+
+
+def coverage_label(site: Site) -> str:
+    """載せている期間の言い方を、いちばん古い会議の名前から作る。
+
+    「令和元年第5回定例会」→「令和元年」。和暦をこちらで組み立てず、
+    会議録に書かれている表記をそのまま使う。
+    """
+    if not site.meetings:
+        return ""
+    oldest = min(site.meetings.values(), key=lambda m: m["first"])
+    m = _ERA_HEAD_RE.match(oldest["name"])
+    if not m:
+        return oldest["first"][:4] + "年"
+    era, year = m.groups()
+    return f"{era}{year}年"
+
+
 def render_index(site: Site) -> str:
     latest = max(site.meetings.items(), key=lambda kv: kv[1]["first"], default=None)
     recent = sorted(site.threads, key=lambda t: t["on"], reverse=True)[:6]
@@ -382,8 +402,9 @@ def render_index(site: Site) -> str:
         )
     body = (
         "<h1>遠賀町議会で、<br>いま話されていること</h1>"
-        f'<p class="lead">平成17年からの会議録を、読みやすく並べ直しています。'
-        f"いまは令和元年からの{len(site.meetings)}会議を載せています。</p>"
+        f'<p class="lead">{esc(coverage_label(site))}からの会議録を、読みやすく並べ直しています。'
+        f"いま載せているのは{len(site.meetings)}会議です。"
+        "それより前の会議録は、遠賀町議会の会議録検索システムでご覧になれます。</p>"
         '<h2>さがす</h2><div class="chips">'
         '<a class="chip" href="meetings/">定例会・臨時会</a>'
         '<a class="chip" href="members/">議員の発言</a>'
@@ -420,6 +441,9 @@ def render_about(site: Site) -> str:
         '<span class="s">議案が常任委員会に付託された場合、委員会の会議録はHPに公開されていません。'
         "付託されたという事実と委員会名だけを表示します。</span></div>"
         "</div>"
+        "<h2>載せている期間</h2><div class=\"referral\">"
+        f"このサイトが載せているのは<b>{esc(coverage_label(site))}以降</b>の会議録です。"
+        "それより前の会議録は、下記の遠賀町議会 会議録検索システムでご覧になれます。</div>"
         "<h2>データの出典</h2><div class=\"stack\">"
         '<a class="card" href="http://iasb-sv.town.onga.lg.jp/voices/index.asp">'
         '<span class="t">遠賀町議会 会議録検索システム（VOICES）</span>'

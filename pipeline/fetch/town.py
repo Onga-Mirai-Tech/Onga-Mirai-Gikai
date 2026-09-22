@@ -31,6 +31,10 @@ from pipeline.common.state import State
 
 TOWN = "https://www.town.onga.lg.jp"
 
+# 取得の対象は令和元年（2019）から。会議録の取得範囲に合わせる。
+# 平成31年以前は今後取得しないと決めた（2026-09-23）。既に取得済みのものは消していない。
+FIRST_YEAR = 2019
+
 # 索引ページ。ここから年別ページ → PDF とたどる。
 SOURCES = {
     "tsukokusho": {
@@ -152,6 +156,7 @@ def run_source(
     key: str,
     dry_run: bool,
     refresh_index: bool,
+    from_year: int = FIRST_YEAR,
 ) -> tuple[int, int]:
     source = SOURCES[key]
     out_dir = root / "data" / "raw" / key
@@ -167,8 +172,11 @@ def run_source(
         print("  [取得予定] 索引ページ（未取得のため、この先は数えられません）")
         return 0, 0
 
-    year_pages = parse_year_pages(index_page, source["year_link_text"])
-    print(f"  年別ページ {len(year_pages)}件")
+    year_pages = [
+        (url, label) for url, label in parse_year_pages(index_page, source["year_link_text"])
+        if label_to_year(label) == 0 or label_to_year(label) >= from_year
+    ]
+    print(f"  年別ページ {len(year_pages)}件（{from_year}年以降）")
 
     attachments: list[Attachment] = []
     for year_url, year_label in year_pages:
@@ -213,6 +221,10 @@ def main(argv: list[str] | None = None) -> int:
         "--only", choices=sorted(SOURCES), help="片方だけ取得する"
     )
     parser.add_argument(
+        "--from-year", type=int, default=FIRST_YEAR,
+        help=f"この年以降の通告書・結果を取得する（既定 {FIRST_YEAR}）",
+    )
+    parser.add_argument(
         "--refresh-index",
         action="store_true",
         help="索引ページと最新年のページを取り直す（月次更新で使う）",
@@ -228,7 +240,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.only and key != args.only:
             continue
         fetched, skipped = run_source(
-            fetcher, state, root, key, args.dry_run, args.refresh_index
+            fetcher, state, root, key, args.dry_run, args.refresh_index, args.from_year
         )
         total_fetched += fetched
         total_skipped += skipped
