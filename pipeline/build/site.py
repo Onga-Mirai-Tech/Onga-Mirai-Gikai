@@ -147,16 +147,15 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
 {body}
 </main>
 <footer class="site-foot"><div class="inner">
-  <b>{FOOTER_HEAD}</b>
-  {FOOTER_BODY}
-  <span class="oss">{FOOTER_OSS}</span>
-  <nav>
+  <p class="notice"><b>{FOOTER_HEAD}</b>{FOOTER_BODY}</p>
+  <nav class="foot-nav" aria-label="サイト内の案内">
     <a href="{root}">トップ</a>
     <a href="{root}meetings/">会議一覧</a>
     <a href="{root}members/">議員の発言</a>
     <a href="{root}about/">このサイトについて</a>
-    <a href="http://iasb-sv.town.onga.lg.jp/voices/index.asp">遠賀町議会 会議録検索システム</a>
   </nav>
+  <p class="foot-source">出典：<a href="http://iasb-sv.town.onga.lg.jp/voices/index.asp">遠賀町議会 会議録検索システム</a><span class="ext">（外部サイト）</span></p>
+  <p class="oss">{FOOTER_OSS}</p>
 </div></footer>
 </body>
 </html>

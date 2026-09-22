@@ -151,12 +151,38 @@ h2::after { content: ""; flex: 1; height: 1px; background: var(--rule-soft); }
 
 .pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; font-family: var(--round); font-size: 13.5px; }
 
-/* ---- フッタ ---- */
+/* ---- フッタ ----
+ * 性格の違う4つを、間隔と字の大きさで分ける。
+ *   1 非公式である旨（いちばん強い）
+ *   2 サイト内の案内
+ *   3 出典（外部サイトへ出る）
+ *   4 参考にしたOSSの断り（いちばん弱い）
+ */
 .site-foot {
-  margin-top: 40px; padding: 20px 16px 32px; background: var(--sunk);
-  font-size: 12.5px; line-height: 1.9; color: var(--muted);
+  margin-top: 48px; padding: 24px 16px 36px;
+  background: var(--sunk); border-top: 1px solid var(--rule);
+  font-size: 13px; line-height: 1.9; color: var(--muted);
 }
 .site-foot .inner { max-width: var(--wrap); margin: 0 auto; }
-.site-foot b { display: block; color: var(--ink-soft); font-family: var(--round); margin-bottom: 5px; }
-.site-foot .oss { display: block; margin-top: 8px; }
-.site-foot nav { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 14px; }
+
+.site-foot .notice { margin: 0; }
+.site-foot .notice b {
+  display: block; color: var(--ink); font-family: var(--round);
+  font-size: 14px; line-height: 1.7; margin-bottom: 6px; text-wrap: balance;
+}
+
+.site-foot .foot-nav {
+  margin: 20px 0 0; padding-top: 18px; border-top: 1px solid var(--rule);
+  display: flex; flex-wrap: wrap; gap: 8px 18px;
+  font-family: var(--round); font-size: 13.5px;
+}
+.site-foot .foot-nav a { text-decoration: none; }
+.site-foot .foot-nav a:hover { text-decoration: underline; }
+
+.site-foot .foot-source { margin: 12px 0 0; font-size: 12.5px; }
+.site-foot .foot-source .ext { color: var(--muted); font-size: 11.5px; margin-left: 2px; }
+
+.site-foot .oss {
+  margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--rule);
+  font-size: 12px; line-height: 1.8;
+}
