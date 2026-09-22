@@ -9,9 +9,14 @@
  *   点線の枠            … AIが書いたもの（P4で使う）
  *
  * 意味を持つ色は青1色だけ。可否や賛否に色を割り当てない。
+ *
+ * 明るい配色に一本化している。会議録は長文を続けて読むものなので、
+ * 暗い背景だと読みにくいという判断（2026-09-23）。端末が暗い設定でも
+ * この配色で表示する。そのため背景と文字色は必ず明示する。
  */
 
 :root {
+  color-scheme: light;
   --paper: #F3F8FC;
   --surface: #FFFFFF;
   --sunk: #E7F1F8;
@@ -29,40 +34,6 @@
   --sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
   --serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
   --wrap: 720px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #121821;
-    --surface: #1A2230;
-    --sunk: #212B3A;
-    --ink: #E4EAF2;
-    --ink-soft: #BAC6D4;
-    --muted: #8695A5;
-    --rule: #2F3A4A;
-    --rule-soft: #27303E;
-    --accent: #7DB3E8;
-    --accent-deep: #A6CCF2;
-    --accent-wash: #1C2735;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 10px 28px rgba(0, 0, 0, .42);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, .4);
-  }
-}
-
-:root[data-theme="dark"] {
-  --paper: #121821;
-  --surface: #1A2230;
-  --sunk: #212B3A;
-  --ink: #E4EAF2;
-  --ink-soft: #BAC6D4;
-  --muted: #8695A5;
-  --rule: #2F3A4A;
-  --rule-soft: #27303E;
-  --accent: #7DB3E8;
-  --accent-deep: #A6CCF2;
-  --accent-wash: #1C2735;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 10px 28px rgba(0, 0, 0, .42);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, .4);
 }
 
 * { box-sizing: border-box; }

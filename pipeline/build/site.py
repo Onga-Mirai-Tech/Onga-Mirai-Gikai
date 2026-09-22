@@ -110,6 +110,8 @@ class Site:
     slugs: dict[str, str]
     # 氏名 → その人が発言した議案（議案での発言の索引）
     member_bills: dict[str, list[dict]]
+    # いちばん新しい会議の出欠表に載っている議員＝現職
+    current_members: set[str]
 
     def voices_url(self, unid: str, huid: int | None = None) -> str:
         f = self.fino.get(unid)
@@ -151,7 +153,7 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
   <nav>
     <a href="{root}">トップ</a>
     <a href="{root}meetings/">会議一覧</a>
-    <a href="{root}members/">議員</a>
+    <a href="{root}members/">町長・各議員の発言</a>
     <a href="{root}about/">このサイトについて</a>
     <a href="http://iasb-sv.town.onga.lg.jp/voices/index.asp">遠賀町議会 会議録検索システム</a>
   </nav>
@@ -384,8 +386,8 @@ def render_index(site: Site) -> str:
         f'<p class="lead">平成17年からの会議録を、読みやすく並べ直しています。'
         f"いまは令和元年からの{len(site.meetings)}会議を載せています。</p>"
         '<h2>さがす</h2><div class="chips">'
-        '<a class="chip" href="meetings/">定例会・臨時会から</a>'
-        '<a class="chip" href="members/">議員から</a>'
+        '<a class="chip" href="meetings/">定例会・臨時会</a>'
+        '<a class="chip" href="members/">町長・各議員の発言</a>'
         '<a class="chip" href="about/">このサイトについて</a>'
         "</div>"
         + latest_card
@@ -432,6 +434,23 @@ def render_about(site: Site) -> str:
                 description="個人運営の非公式サイトであること、守っているルール、データの出典。")
 
 
+_MEMBER_TITLE_RE = re.compile(r"^[０-９0-9]+番議員$")
+
+
+def is_member_role(title: str) -> bool:
+    """その発言が**議員としての発言**か。
+
+    議員から町長になる人がいる（古野修）。町長・執行部としての発言まで議員ページに
+    並べると、答弁が膨大で索引として使えなくなる。議員時代の発言だけを載せる。
+    議長・副議長・委員長は議員が務めるので含める。
+    """
+    return bool(
+        _MEMBER_TITLE_RE.match(title)
+        or title in ("議長", "副議長", "臨時議長")
+        or "委員長" in title
+    )
+
+
 def member_slug(site: Site, name: str) -> str:
     """議員ページのURLに使う名前。
 
@@ -453,9 +472,8 @@ def members_in_scope(site: Site) -> list[dict]:
 def render_member_index(site: Site) -> str:
     depth = 1
     members = members_in_scope(site)
-    latest = max((s["last"] for s in members), default="")
-    current = [m for m in members if m["last"] >= latest[:4] + "-01-01"]
-    past = [m for m in members if m not in current]
+    current = [m for m in members if m["name"] in site.current_members]
+    past = [m for m in members if m["name"] not in site.current_members]
 
     def cards(group: list[dict]) -> str:
         return "".join(
@@ -470,13 +488,17 @@ def render_member_index(site: Site) -> str:
 
     body = (
         crumb(depth)
-        + "<h1>議員</h1>"
+        + "<h1>町長・各議員の発言</h1>"
         + '<p class="lead">このサイトが載せている会議録に発言のある議員です。'
+        "現職かどうかは、いちばん新しい会議の出欠表に載っているかで分けています。"
         "並び順は最後に発言した日の新しい順で、順位づけではありません。</p>"
-        + (f'<h2>最近発言のある議員</h2><div class="stack">{cards(current)}</div>' if current else "")
-        + (f'<h2>それ以前の議員</h2><div class="stack">{cards(past)}</div>' if past else "")
+        + '<div class="referral">議員から町長になった人も載せていますが、'
+        "<b>載せているのは議員だったときの発言だけ</b>です。"
+        "町長・執行部としての答弁は量が膨大で、索引として使えなくなるため含めていません。</div>"
+        + (f'<h2>現職議員</h2><div class="stack">{cards(current)}</div>' if current else "")
+        + (f'<h2>過去の議員</h2><div class="stack">{cards(past)}</div>' if past else "")
     )
-    return page(site, title="議員", body=body, depth=depth,
+    return page(site, title="町長・各議員の発言", body=body, depth=depth,
                 description="遠賀町議会の議員の一覧。発言した一般質問と議案への索引です。")
 
 
@@ -519,8 +541,12 @@ def render_member(site: Site, m: dict) -> str:
         for r in sorted(m["roles"], key=lambda r: r["first"])
     )
 
+    non_member = [r["title"] for r in m["roles"] if not is_member_role(r["title"])]
     note_index = (
-        '<div class="referral">このページは索引です。発言の内容は各ページでご覧ください。'
+        (f'<div class="referral">この方は{esc("・".join(sorted(set(non_member))))}'
+         "も務めています。ここに載せているのは<b>議員だったときの発言だけ</b>です。</div>"
+         if non_member else "")
+        + '<div class="referral">このページは索引です。発言の内容は各ページでご覧ください。'
         "賛否の記録は公表されていないため、このサイトでは扱っていません。</div>"
     )
     note_counts = (
@@ -616,17 +642,33 @@ def build(root: Path, out: Path, since: date, limit_meetings: int | None) -> Sit
             u = next((x for x in tr.utterances if x.seq == ref["seq"]), None)
             if u is None or u.kind not in ("質問者", "答弁者") or not u.name:
                 continue
+            if not is_member_role(u.title):
+                continue  # 町長・執行部としての答弁は議員ページに載せない
             if u.name not in seen:
                 seen.add(u.name)
                 member_bills[u.name].append(b)
     for v in member_bills.values():
         v.sort(key=lambda b: b["decided_on"] or b["submitted_on"], reverse=True)
 
+    # 現職＝いちばん新しい会議の出欠表に載っている議員。日付の当て推量をしない。
+    current_members: set[str] = set()
+    if transcripts:
+        newest = max(transcripts, key=lambda k: unid_to_date(k))
+        aliases = {}
+        mp = root / "masters" / "speakers.json"
+        if mp.exists():
+            aliases = json.loads(mp.read_text(encoding="utf-8")).get("aliases", {})
+        current_members = {
+            aliases.get(a.name, a.name) for a in transcripts[newest].attendance
+            if a.status in ("出席", "欠席", "記載なし")
+        }
+
     overrides = json.loads((root / "masters" / "speakers.json").read_text(encoding="utf-8")) \
         if (root / "masters" / "speakers.json").exists() else {}
     return Site(out=out, transcripts=transcripts, fino=fino, threads=threads,
                 bills=bills, speakers=speakers, meetings=meetings,
-                slugs=overrides.get("slugs", {}), member_bills=dict(member_bills))
+                slugs=overrides.get("slugs", {}), member_bills=dict(member_bills),
+                current_members=current_members)
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -35,7 +35,8 @@ class TestSlugs(unittest.TestCase):
 class TestMemberSlug(unittest.TestCase):
     def site(self, slugs):
         return S.Site(out=None, transcripts={}, fino={}, threads=[], bills=[],
-                      speakers={}, meetings={}, slugs=slugs, member_bills={})
+                      speakers={}, meetings={}, slugs=slugs, member_bills={},
+                      current_members=set())
 
     def test_uses_romaji_when_given(self):
         # 氏名の読みはこちらでは決められないので、人が masters/speakers.json に入れる
@@ -44,6 +45,17 @@ class TestMemberSlug(unittest.TestCase):
 
     def test_falls_back_to_the_name(self):
         self.assertEqual(S.member_slug(self.site({}), "野口久美子"), "野口久美子")
+
+
+class TestMemberRole(unittest.TestCase):
+    def test_member_titles(self):
+        for t in ("３番議員", "１１番議員", "議長", "副議長", "第一常任委員会委員長"):
+            self.assertTrue(S.is_member_role(t), t)
+
+    def test_executive_titles_are_excluded(self):
+        # 議員から町長になった人の、町長としての答弁は議員ページに載せない
+        for t in ("町長", "副町長", "教育長", "税務課長", "会計管理者"):
+            self.assertFalse(S.is_member_role(t), t)
 
 
 class TestMembersInScope(unittest.TestCase):
@@ -56,7 +68,7 @@ class TestMembersInScope(unittest.TestCase):
                           "井口正彦": {"name": "井口正彦", "kind": "執行部", "seats": [],
                                     "first": "2020-01-01", "last": "2026-06-09"},
                       },
-                      meetings={}, slugs={}, member_bills={})
+                      meetings={}, slugs={}, member_bills={}, current_members=set())
         self.assertEqual([m["name"] for m in S.members_in_scope(site)], ["古野修"])
 
 
