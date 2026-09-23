@@ -138,7 +138,12 @@ BILL_TOOL = {
 TOOLS = {"thread": THREAD_TOOL, "bill": BILL_TOOL}
 
 
-def build(kind: str, body: str, model: str, max_tokens: int = 4000) -> dict:
+# 長い一般質問は往復が20近くあり、4000では途中で切れる（実測: 令和元年第4回定例会）。
+# 出力トークンは生成したぶんだけ課金されるので、上限を上げても費用は増えない。
+MAX_TOKENS = 16000
+
+
+def build(kind: str, body: str, model: str, max_tokens: int = MAX_TOKENS) -> dict:
     """Messages API に渡すパラメータを作る。Batch API のリクエストにもそのまま使える。"""
     tool = TOOLS[kind]
     return {

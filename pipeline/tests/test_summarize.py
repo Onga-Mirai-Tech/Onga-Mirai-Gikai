@@ -13,6 +13,7 @@ import unittest
 
 from pipeline.summarize import compare as X
 from pipeline.summarize import prompt as P
+from pipeline.summarize import run as R
 
 
 SOURCE = """【議案】令和3年第2回定例会
@@ -60,6 +61,36 @@ class TestBadHuids(unittest.TestCase):
         data = {"topics": [{"no": 1, "title": "t",
                             "points": [{"question": "q", "answer": "a", "huids": [41305, 12345]}]}]}
         self.assertEqual(X.bad_huids(data, SOURCE), [12345])
+
+
+class TestVerify(unittest.TestCase):
+    def test_a_summary_without_sources_is_not_verified(self):
+        # 根拠がない要約は原文と照合できない。公開してよいかの線引きに使う。
+        r = R.verify("bill", {"points": [{"kind": "討論", "text": "x", "huids": []}]}, SOURCE)
+        self.assertFalse(r["verified"])
+        self.assertEqual([i["kind"] for i in r["issues"]], ["根拠の発言IDがない"])
+
+    def test_a_clean_summary_is_verified(self):
+        r = R.verify("bill", {"points": [{"kind": "提案理由", "text": "8,450万円です。",
+                                          "huids": [41305]}]}, SOURCE)
+        self.assertTrue(r["verified"], r["issues"])
+
+    def test_a_wrong_number_is_flagged(self):
+        r = R.verify("bill", {"points": [{"kind": "提案理由", "text": "6億3,500万円の増。",
+                                          "huids": [41305]}]}, SOURCE)
+        self.assertFalse(r["verified"])
+        self.assertIn("原文にない数字", [i["kind"] for i in r["issues"]])
+
+
+class TestCustomId(unittest.TestCase):
+    def test_is_safe_for_the_batch_api(self):
+        # custom_id に使えるのは英数字と `_-` だけ。議案IDは日本語を含むので使えない。
+        cid = R.custom_id("bill", 42)
+        self.assertTrue(cid.replace("_", "").replace("-", "").isalnum(), cid)
+        self.assertLessEqual(len(cid), 64)
+
+    def test_threads_and_bills_do_not_collide(self):
+        self.assertNotEqual(R.custom_id("thread", 1), R.custom_id("bill", 1))
 
 
 class TestPrompt(unittest.TestCase):
