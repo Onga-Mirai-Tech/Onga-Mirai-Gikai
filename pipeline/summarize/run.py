@@ -229,6 +229,15 @@ def collect(client, root: Path, batch_id: str) -> tuple[int, int, int]:
     by_id = {t["id"]: ("thread", t) for t in threads}
     by_id.update({b["id"]: ("bill", b) for b in bills})
 
+    # 終わっていないバッチには結果がない。SDKはここで例外を投げるので、
+    # 手前で状態を見て、何が起きているかが分かる形で止める。
+    b = client.messages.batches.retrieve(batch_id)
+    if b.processing_status != "ended":
+        c = b.request_counts
+        print(f"  まだ処理中です（成功{c.succeeded} / 失敗{c.errored} / 処理中{c.processing}）。"
+              "\n  終わってから、同じコマンドをもう一度実行してください。")
+        return 0, 0, 0
+
     saved = flagged = failed = 0
     for res in client.messages.batches.results(batch_id):
         m = mapping.get(res.custom_id)
