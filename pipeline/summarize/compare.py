@@ -77,6 +77,31 @@ def _norm(s: str) -> str:
     return unicodedata.normalize("NFKC", s).replace(",", "").replace("，", "")
 
 
+def _variants(text: str) -> list[str]:
+    """同じ数を、会議録が書きうる別の表記でも探せるようにする。
+
+    会議録は「５万6,100円」のように**万・億と数字を混ぜて**書く。
+    要約が「56,100円」と書いても値は同じで、作り話ではない。
+    表記の違いだけで保留にすると、正しい要約がサイトに出なくなる。
+
+    桁を取り違えた場合（6,350万 → 6億3,500万）は、どの表記でも一致しないので
+    引き続き拾える。実際にそれで Haiku の誤りを見つけている。
+    """
+    out = [text]
+    if not text.isdigit():
+        return out
+    n = int(text)
+    if n >= 10**8:
+        a, b = divmod(n, 10**8)
+        out.append(f"{a}億{b}" if b else f"{a}億")
+        if b and b % 10000 == 0:
+            out.append(f"{a}億{b // 10000}万")
+    if n >= 10000:
+        a, b = divmod(n, 10000)
+        out.append(f"{a}万{b}" if b else f"{a}万")
+    return out
+
+
 def unmatched_numbers(summary: str, source: str) -> list[str]:
     """要約に出てくる数字が原文にあるか。なければ、作られた数字の疑いがある。
 
@@ -86,7 +111,7 @@ def unmatched_numbers(summary: str, source: str) -> list[str]:
     out = []
     for m in _DIGITS.finditer(summary):
         n = _norm(m.group(0)).rstrip(".")
-        if n and n not in src:
+        if n and not any(v in src for v in _variants(n)):
             out.append(m.group(0))
     return sorted(set(out))
 

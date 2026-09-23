@@ -42,6 +42,20 @@ class TestUnmatchedNumbers(unittest.TestCase):
     def test_accepts_numbers_that_are_in_the_source(self):
         self.assertEqual(X.unmatched_numbers("6,350万円の増です。", SOURCE), [])
 
+    def test_accepts_the_man_notation_the_minutes_use(self):
+        # 会議録は「５万6,100円」と書き、要約は「56,100円」と書く。値は同じ。
+        src = "小学校の給食費は年間５万6,100円です。"
+        self.assertEqual(X.unmatched_numbers("年間56,100円です。", src), [])
+
+    def test_still_catches_a_wrong_order_of_magnitude(self):
+        # 万表記を許しても、桁の取り違えは拾えなければならない
+        src = "前年対比6,350万円の増でございます。"
+        self.assertEqual(X.unmatched_numbers("6億3,500万円の増", src), ["3,500"])
+
+    def test_accepts_the_oku_notation(self):
+        # 86億4,762万円 = 8,647,620,000円
+        self.assertEqual(X.unmatched_numbers("8,647,620,000円", "総額86億4,762万円です。"), [])
+
     def test_flags_a_fabricated_year(self):
         # 実際に起きた誤り: 原文にない西暦を計算して書いた
         self.assertEqual(X.unmatched_numbers("2021年時点で", SOURCE), ["2021"])

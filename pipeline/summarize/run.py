@@ -287,11 +287,38 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--regenerate", action="store_true",
                     help="生成済みも作り直す。プロンプトを変えたときだけ使う")
     ap.add_argument("--limit", type=int, help="この件数だけ投げる（動作確認用）")
+    ap.add_argument("--reverify", action="store_true",
+                    help="保存済みの要約を、いまの検証でもう一度確かめる（APIは使わない）")
     ap.add_argument("--only", choices=("thread", "bill"),
                     help="一般質問だけ / 議案だけ。残高に余裕がないときに分けて回す")
     args = ap.parse_args(argv)
 
     root = Path(__file__).resolve().parents[2]
+
+    if args.reverify:
+        # 検証のやり方を直したときに使う。要約そのものは作り直さない。
+        threads, bills = C.load_normalized(root)
+        by_id = {t["id"]: ("thread", t) for t in threads}
+        by_id.update({b["id"]: ("bill", b) for b in bills})
+        changed = still = 0
+        for sub in ("threads", "bills"):
+            for f in sorted((root / "data" / "summaries" / sub).glob("*.json")):
+                s = json.loads(f.read_text(encoding="utf-8"))
+                kind, item = by_id[s["id"]]
+                body = (C.thread_input(root, item) if kind == "thread"
+                        else C.bill_input(root, item))
+                before = s.get("verified")
+                s.update(verify(kind, s["summary"], body))
+                if s["verified"] != before:
+                    changed += 1
+                    print(f"  {s['id']}: {before} → {s['verified']}")
+                if not s["verified"]:
+                    still += 1
+                    for i in s["issues"]:
+                        print(f"    {i['kind']} {i['detail']}")
+                f.write_text(json.dumps(s, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"\n判定が変わった {changed}件 / まだ要確認 {still}件")
+        return 0
 
     if args.collect:
         import anthropic
