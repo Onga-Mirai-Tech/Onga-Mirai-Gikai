@@ -77,6 +77,31 @@ def targets(root: Path, regenerate: bool) -> list[tuple[str, dict, str]]:
     return items
 
 
+def shape_ok(kind: str, data: dict) -> bool:
+    """要約が想定した形になっているか。
+
+    ツールのJSON Schemaを指定していても、そのとおりに返ってこないことがある
+    （実測: 議案の `points` が文字列の配列で返った）。形が違うものは**保存しない**。
+    保存すると「生成済み」とみなされ、欠けたまま二度と作り直されなくなる。
+    """
+    if not isinstance(data, dict):
+        return False
+    if kind == "thread":
+        topics = data.get("topics")
+        if not isinstance(topics, list) or not topics:
+            return False
+        return all(
+            isinstance(t, dict) and isinstance(t.get("points"), list) and t["points"]
+            and all(isinstance(pt, dict) and pt.get("question") and pt.get("answer")
+                    for pt in t["points"])
+            for t in topics
+        )
+    points = data.get("points")
+    if not isinstance(points, list) or not points:
+        return False
+    return all(isinstance(p, dict) and p.get("kind") and p.get("text") for p in points)
+
+
 def verify(kind: str, data: dict, body: str) -> dict:
     """機械で見られるところだけ見る。ここで落ちたものは人が確認する。
 
@@ -178,6 +203,10 @@ def collect(client, root: Path, batch_id: str) -> tuple[int, int, int]:
             continue
 
         kind, item = by_id[m["id"]]
+        if not shape_ok(kind, data):
+            print(f"  [形が違う] {m['id']}")
+            failed += 1
+            continue
         body = C.thread_input(root, item) if kind == "thread" else C.bill_input(root, item)
         ok = save(root, kind, item, data, body,
                   {"input_tokens": msg.usage.input_tokens,
@@ -197,6 +226,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--regenerate", action="store_true",
                     help="生成済みも作り直す。プロンプトを変えたときだけ使う")
     ap.add_argument("--limit", type=int, help="この件数だけ投げる（動作確認用）")
+    ap.add_argument("--only", choices=("thread", "bill"),
+                    help="一般質問だけ / 議案だけ。残高に余裕がないときに分けて回す")
     args = ap.parse_args(argv)
 
     root = Path(__file__).resolve().parents[2]
@@ -215,6 +246,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     items = targets(root, args.regenerate)
+    if args.only:
+        items = [x for x in items if x[0] == args.only]
     if args.limit:
         items = items[: args.limit]
 

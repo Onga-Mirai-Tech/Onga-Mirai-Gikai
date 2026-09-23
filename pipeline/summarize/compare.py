@@ -97,14 +97,23 @@ def bad_huids(data: dict, source: str) -> list[int]:
     return sorted({h for h in _all_huids(data) if h not in present})
 
 
+def _dicts(seq) -> list[dict]:
+    """要素が dict でないものは捨てる。
+
+    モデルが `points` を文字列の配列で返すことがある。形が違うだけで
+    回収処理全体が止まるのは困るので、ここで吸収して呼び出し側で弾く。
+    """
+    return [x for x in (seq if isinstance(seq, list) else []) if isinstance(x, dict)]
+
+
 def _all_huids(data: dict) -> list[int]:
     """一般質問は topics[].points[].huids、議案は points[].huids。"""
     out: list[int] = []
-    for t in data.get("topics", []):
-        for pt in t.get("points", []):
-            out += [int(h) for h in pt.get("huids", [])]
-    for pt in data.get("points", []):
-        out += [int(h) for h in pt.get("huids", [])]
+    for t in _dicts(data.get("topics")):
+        for pt in _dicts(t.get("points")):
+            out += [int(h) for h in pt.get("huids", []) if isinstance(h, (int, str))]
+    for pt in _dicts(data.get("points")):
+        out += [int(h) for h in pt.get("huids", []) if isinstance(h, (int, str))]
     return out
 
 
@@ -118,16 +127,16 @@ def run_one(client, kind: str, body: str, model: str) -> tuple[dict, object]:
 def render(kind: str, data: dict) -> str:
     lines = []
     if kind == "thread":
-        for t in data.get("topics", []):
+        for t in _dicts(data.get("topics")):
             lines.append(f"**{t.get('no')}. {t.get('title', '')}**")
             lines.append("")
-            for pt in t.get("points", []):
+            for pt in _dicts(t.get("points")):
                 lines.append(f"- 質問: {pt.get('question', '')}")
                 lines.append(f"- 答弁: {pt.get('answer', '')}")
                 lines.append(f"- 根拠: {pt.get('huids', [])}")
                 lines.append("")
     else:
-        for p in data.get("points", []):
+        for p in _dicts(data.get("points")):
             lines.append(f"**{p.get('kind')}**  根拠: {p.get('huids', [])}")
             lines.append(p.get("text", ""))
             lines.append("")
@@ -138,9 +147,10 @@ def flat_text(kind: str, data: dict) -> str:
     if kind == "thread":
         return " ".join(
             " ".join([t.get("title", "")]
-                     + [f"{pt.get('question','')} {pt.get('answer','')}" for pt in t.get("points", [])])
-            for t in data.get("topics", []))
-    return " ".join(p.get("text", "") for p in data.get("points", []))
+                     + [f"{pt.get('question','')} {pt.get('answer','')}"
+                        for pt in _dicts(t.get("points"))])
+            for t in _dicts(data.get("topics")))
+    return " ".join(p.get("text", "") for p in _dicts(data.get("points")))
 
 
 def main(argv: list[str] | None = None) -> int:
