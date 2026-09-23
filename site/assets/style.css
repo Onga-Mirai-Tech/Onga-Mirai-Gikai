@@ -186,3 +186,47 @@ h2::after { content: ""; flex: 1; height: 1px; background: var(--rule-soft); }
   margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--rule);
   font-size: 12px; line-height: 1.8;
 }
+
+/* ---- AI要約 ----
+ * 点線の枠は「AIが書いたもの」の目印（冒頭の書体の説明を参照）。
+ * 本文は明朝（原文）でも丸ゴシック（このサイトの言葉）でもない素のゴシックにする。
+ * 要点ごとに原文へのリンクを置く（CLAUDE.md の絶対条件）。
+ */
+.ai {
+  background: var(--surface); border: 1px dashed var(--rule);
+  border-radius: 14px; padding: 14px 16px;
+}
+.ai .tag {
+  margin: 0 0 14px; font-family: var(--round); font-size: 12.5px;
+  color: var(--ink-soft); line-height: 1.8;
+}
+.ai .tag b { color: var(--ink); }
+.ai h3 {
+  font-family: var(--round); font-size: 14px; font-weight: 600; color: var(--accent);
+  margin: 18px 0 10px; line-height: 1.6;
+}
+.ai h3:first-of-type { margin-top: 0; }
+.ai .qa { padding: 10px 0; }
+.ai .qa + .qa { border-top: 1px solid var(--rule-soft); }
+.ai .qa p { margin: 0 0 6px; font-size: 14px; line-height: 1.9; }
+.ai .q { color: var(--ink); }
+.ai .q::before, .ai .a::before {
+  font-family: var(--round); font-size: 11px; color: var(--muted);
+  display: block; letter-spacing: .08em;
+}
+.ai .q::before { content: "質問"; }
+.ai .a::before { content: "答弁"; }
+.ai .a { color: var(--ink-soft); }
+.ai .k {
+  font-family: var(--round); font-size: 11px; color: var(--accent);
+  background: var(--accent-wash); border-radius: 999px; padding: 2px 10px;
+  display: inline-block; margin-bottom: 8px !important;
+}
+.ai .src {
+  margin: 8px 0 0 !important; font-size: 12px;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px;
+}
+.ai .src .cap { font-family: var(--round); font-size: 11px; color: var(--muted); letter-spacing: .08em; }
+.ai .src a { color: var(--muted); text-decoration: none; }
+.ai .src a .mark { margin-right: 3px; }
+.ai .src a:hover { color: var(--accent); text-decoration: underline; }

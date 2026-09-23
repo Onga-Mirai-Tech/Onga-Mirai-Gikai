@@ -112,6 +112,8 @@ class Site:
     member_bills: dict[str, list[dict]]
     # いちばん新しい会議の出欠表に載っている議員＝現職
     current_members: set[str]
+    # 議案ID・一般質問ID → AI要約。検証を通ったものだけ入れる
+    summaries: dict[str, dict]
 
     def voices_url(self, unid: str, huid: int | None = None) -> str:
         f = self.fino.get(unid)
@@ -172,6 +174,77 @@ def crumb(depth: int, *parts: tuple[str, str]) -> str:
 
 # ---------------------------------------------------------------- ページ
 
+AI_NOTE = (
+    "この要約は<b>AIが会議録から作ったもの</b>です。"
+    "要点ごとに原文へのリンクを付けています。正確な内容は原文でご確認ください。"
+)
+
+
+def ai_sources(site: Site, huids: list, unid_of) -> str:
+    """要点の根拠になった発言へのリンクを並べる。
+
+    AI要約には必ず原文へのリンクを併記する（CLAUDE.md）。
+
+    リンクの文字は「原文」ではなく**発言者の名前**にする。
+    同じ要点に複数の根拠が付くのが普通で、「原文 原文 原文」と並ぶと
+    どれを開けばよいか分からなくなるため。記号は会議録の話者記号に合わせる。
+    """
+    out = []
+    for h in huids:
+        unid = unid_of(h)
+        tr = site.transcripts.get(unid)
+        u = next((x for x in tr.utterances if x.huid == int(h)), None) if tr else None
+        mark = {"質問者": "◆", "答弁者": "◎", "議長": "○"}.get(u.kind, "") if u else ""
+        label = (u.name or u.title) if u else f"発言{h}"
+        url = site.voices_url(unid, int(h))
+        out.append(f'<a href="{url}"><span class="mark">{mark}</span>{esc(label)}</a>'
+                   if url else f'<span>{esc(label)}</span>')
+    return f'<p class="src"><span class="cap">原文</span>{"".join(out)}</p>' if out else ""
+
+
+def render_ai_thread(site: Site, thread: dict) -> str:
+    s = site.summaries.get(thread["id"])
+    if not s:
+        return ""
+    unid = thread["unid"]
+    blocks = []
+    for topic in s["summary"].get("topics", []):
+        points = "".join(
+            '<div class="qa">'
+            f'<p class="q">{esc(pt.get("question", ""))}</p>'
+            f'<p class="a">{esc(pt.get("answer", ""))}</p>'
+            + ai_sources(site, pt.get("huids", []), lambda _h: unid)
+            + "</div>"
+            for pt in topic.get("points", [])
+        )
+        blocks.append(f'<h3>{topic.get("no", "")}. {esc(topic.get("title", ""))}</h3>{points}')
+    if not blocks:
+        return ""
+    return (f'<h2>AI要約</h2><div class="ai"><p class="tag">{AI_NOTE}</p>'
+            + "".join(blocks) + "</div>")
+
+
+def render_ai_bill(site: Site, bill: dict) -> str:
+    s = site.summaries.get(bill["id"])
+    if not s:
+        return ""
+    # 発言IDから、その発言がどの日の会議録にあるかを引く
+    where = {u["huid"]: u["unid"] for u in bill["utterances"]}
+    blocks = []
+    for pt in s["summary"].get("points", []):
+        blocks.append(
+            '<div class="qa">'
+            f'<p class="k">{esc(pt.get("kind", ""))}</p>'
+            f'<p>{esc(pt.get("text", ""))}</p>'
+            + ai_sources(site, pt.get("huids", []), lambda h: where.get(int(h), ""))
+            + "</div>"
+        )
+    if not blocks:
+        return ""
+    return (f'<h2>AI要約</h2><div class="ai"><p class="tag">{AI_NOTE}</p>'
+            + "".join(blocks) + "</div>")
+
+
 def render_thread(site: Site, thread: dict) -> str:
     tr = site.transcripts[thread["unid"]]
     by_seq = {u.seq: u for u in tr.utterances}
@@ -210,6 +283,7 @@ def render_thread(site: Site, thread: dict) -> str:
         f'（<a href="../../members/{member_slug(site, thread["questioner"])}/">'
         f'{esc(thread["questioner"])}</a>） ／ 通告順{thread["order"]}</p>'
         + topics
+        + render_ai_thread(site, thread)
         + "<h2>やりとり</h2>"
         + f'<div class="turns">{"".join(turns)}</div>'
         + (f'<a class="source" href="{site.voices_url(thread["unid"])}">この日の会議録をすべて読む</a>'
@@ -287,6 +361,7 @@ def render_bill(site: Site, bill: dict) -> str:
         + f'<p class="meta">{esc(bill["title"])}</p>'
         + f"<dl class=\"kv\">{kv}</dl>"
         + vote
+        + render_ai_bill(site, bill)
         + discussion
         + (f"<h2>委員会付託</h2>{ref}" if ref else "")
     )
@@ -417,6 +492,20 @@ def render_index(site: Site) -> str:
                 description="遠賀町議会の会議録を、議事の流れと誰が何を言ったかが分かる形で並べ直した個人運営の非公式サイトです。")
 
 
+def ai_model(site: Site) -> str:
+    """要約に使ったモデル名。要約JSONに記録してあるものを読む。
+
+    こちらで書き足すと、実際に使ったモデルとずれる。
+    """
+    names = sorted({s.get("model", "") for s in site.summaries.values()} - {""})
+    return "・".join(names) or "（まだありません）"
+
+
+def ai_prompt_version(site: Site) -> str:
+    vs = sorted({s.get("prompt_version", "") for s in site.summaries.values()} - {""})
+    return "・".join(vs) or "（まだありません）"
+
+
 def render_about(site: Site) -> str:
     depth = 1
     body = (
@@ -441,7 +530,24 @@ def render_about(site: Site) -> str:
         '<span class="s">議案が常任委員会に付託された場合、委員会の会議録はHPに公開されていません。'
         "付託されたという事実と委員会名だけを表示します。</span></div>"
         "</div>"
-        "<h2>載せている期間</h2><div class=\"referral\">"
+        "<h2>AI要約について</h2><div class=\"stack\">"
+        '<div class="card"><span class="t">AIが書いた部分は点線の枠で囲みます</span>'
+        '<span class="s">一般質問は通告書の質問事項ごとに、議案は質疑・討論があったものだけを要約しています。'
+        "会議全体や定例会全体のまとめにはAIを使いません。要約の要約は原文から遠くなり、誤りが増えるためです。</span></div>"
+        '<div class="card"><span class="t">要点ごとに原文へのリンクを付けます</span>'
+        '<span class="s">どの発言をもとにした要点なのかが分かるようにしています。'
+        "リンクの文字は発言した人の名前です。</span></div>"
+        '<div class="card"><span class="t">機械で確かめてから載せています</span>'
+        '<span class="s">要約に出てくる数字が原文にあるか、引用した発言が実在するかを、'
+        "公開前に1件ずつ突き合わせています。合わないものは人が確認するまで載せません。</span></div>"
+        '<div class="card"><span class="t">それでも誤りは残ります</span>'
+        '<span class="s">AIの要約は完全ではありません。おかしいと思われた箇所は、'
+        "必ず原文をご確認ください。お気づきの点はご連絡いただけると助かります。</span></div>"
+        "</div>"
+        + f'<div class="referral">使用しているモデルは <b>{esc(ai_model(site))}</b>、'
+        f'要約の指示の版は <b>{esc(ai_prompt_version(site))}</b> です。'
+        f'いま載せている要約は{len(site.summaries)}件です。</div>'
+        + "<h2>載せている期間</h2><div class=\"referral\">"
         f"このサイトが載せているのは<b>{esc(coverage_label(site))}以降</b>の会議録です。"
         "それより前の会議録は、下記の遠賀町議会 会議録検索システムでご覧になれます。</div>"
         "<h2>データの出典</h2><div class=\"stack\">"
@@ -600,6 +706,25 @@ def write(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def load_summaries(root: Path) -> tuple[dict[str, dict], int]:
+    """AI要約を読む。**検証を通らなかったものは載せない。**
+
+    原文にない数字や実在しない発言IDを含む要約を出すと、
+    中立性・正確性の約束（CLAUDE.md）を破ることになる。
+    人が確認して直すまでは、そのページに要約を出さないだけにする。
+    """
+    out: dict[str, dict] = {}
+    held = 0
+    for sub in ("threads", "bills"):
+        for f in sorted((root / "data" / "summaries" / sub).glob("*.json")):
+            s = json.loads(f.read_text(encoding="utf-8"))
+            if not s.get("verified"):
+                held += 1
+                continue
+            out[s["id"]] = s
+    return out, held
+
+
 def load_fino(root: Path) -> dict[str, int]:
     """state.json から UNID → FINO を作る。原文リンクの組み立てに使う。"""
     state_path = root / "state.json"
@@ -688,10 +813,13 @@ def build(root: Path, out: Path, since: date, limit_meetings: int | None) -> Sit
 
     overrides = json.loads((root / "masters" / "speakers.json").read_text(encoding="utf-8")) \
         if (root / "masters" / "speakers.json").exists() else {}
+    summaries, held = load_summaries(root)
+    print(f"  AI要約 {len(summaries)}件を読みました"
+          + (f"（検証が通らず保留 {held}件）" if held else ""))
     return Site(out=out, transcripts=transcripts, fino=fino, threads=threads,
                 bills=bills, speakers=speakers, meetings=meetings,
                 slugs=overrides.get("slugs", {}), member_bills=dict(member_bills),
-                current_members=current_members)
+                current_members=current_members, summaries=summaries)
 
 
 def main(argv: list[str] | None = None) -> int:
