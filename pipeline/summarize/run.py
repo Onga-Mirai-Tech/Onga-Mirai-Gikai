@@ -77,6 +77,57 @@ def targets(root: Path, regenerate: bool) -> list[tuple[str, dict, str]]:
     return items
 
 
+def _as_list(value):
+    """配列であるべきところが文字列で返ってきたときに、中の配列を取り出す。
+
+    実測（令和2年第9回の一般質問ほか）:
+      "topics": "\n<parameter name=\"topics\">[ {...}, {...} ]"
+    中身は正しいJSONなのに、ツール呼び出しの包み方だけが壊れている。
+    捨てて投げ直すと同じ内容にもう一度課金することになるので、拾い直す。
+
+    最初の `[` から最後の `]` までを読む。読めなければ None を返し、
+    呼び出し側（shape_ok）が弾く。壊れたものを通さないことが優先。
+    """
+    if isinstance(value, list):
+        # 要素が JSON 文字列で返ることもある（実測: 議案の points）。
+        out = []
+        for x in value:
+            if isinstance(x, str):
+                try:
+                    x = json.loads(x)
+                except ValueError:
+                    return None
+            if not isinstance(x, dict):
+                return None
+            out.append(x)
+        return out
+    if not isinstance(value, str):
+        return None
+    i, j = value.find("["), value.rfind("]")
+    if i < 0 or j <= i:
+        return None
+    try:
+        parsed = json.loads(value[i:j + 1])
+    except ValueError:
+        return None
+    return parsed if isinstance(parsed, list) else None
+
+
+def repair(kind: str, data: dict) -> dict:
+    """形が崩れた出力を、**内容を変えずに**組み直す。読めなければそのまま返す。"""
+    if not isinstance(data, dict):
+        return data
+    key = "topics" if kind == "thread" else "points"
+    top = _as_list(data.get(key))
+    if top is None:
+        return data
+    if kind == "thread":
+        for topic in top:
+            if (pts := _as_list(topic.get("points"))) is not None:
+                topic["points"] = pts
+    return {**data, key: top}
+
+
 def shape_ok(kind: str, data: dict) -> bool:
     """要約が想定した形になっているか。
 
@@ -203,6 +254,7 @@ def collect(client, root: Path, batch_id: str) -> tuple[int, int, int]:
             continue
 
         kind, item = by_id[m["id"]]
+        data = repair(kind, data)
         if not shape_ok(kind, data):
             print(f"  [形が違う] {m['id']}")
             failed += 1
