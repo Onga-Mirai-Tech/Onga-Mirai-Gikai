@@ -33,6 +33,10 @@ from pipeline.common.http import decode_cp932
 from pipeline.fetch.voices import unid_to_date
 from pipeline.parse import transcript as T
 
+# このサイト自身のソースコードの公開先。フッターの「ソースコード（GitHub）」から辿れるようにする
+# （本家みらい議会の FORK_GUIDELINES.md に倣う。fork ではないので義務ではない）。
+SOURCE_URL = "https://github.com/Onga-Mirai-Tech/Onga-Mirai-Gikai"
+
 # スタイルシートの実体。中身の印をURLに付けて、古いCSSが残らないようにする。
 CSS_SOURCE = Path(__file__).resolve().parents[2] / "site" / "assets" / "style.css"
 
@@ -43,6 +47,9 @@ SITE_NAME = "みらい議会＠遠賀町"
 # 公開は令和元年〜を先行する（docs/設計ドラフト.md「2. 決定事項」）
 DEFAULT_FROM = date(2019, 5, 1)
 
+# 会議録検索システム（VOICES）。他の自治体で使うときは、ここと
+# pipeline/fetch/voices.py の BASE を書き換える。
+VOICES_TOP = "http://iasb-sv.town.onga.lg.jp/voices/index.asp"
 VOICES_BODY = (
     "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe"
     "?ACT=203&FINO={fino}&HATSUGENMODE=1&HYOUJIMODE=0&STYLE=0"
@@ -190,8 +197,9 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
     <a href="{root}about/">このサイトについて</a>
     <a href="{root}terms/">利用規約</a>
     <a href="{root}privacy/">プライバシーポリシー</a>
+    <a href="{SOURCE_URL}">ソースコード（GitHub）</a>
   </nav>
-  <p class="foot-source">出典：<a href="http://iasb-sv.town.onga.lg.jp/voices/index.asp">遠賀町議会 会議録検索システム</a><span class="ext">（外部サイト）</span></p>
+  <p class="foot-source">出典：<a href="{VOICES_TOP}">遠賀町議会 会議録検索システム</a><span class="ext">（外部サイト）</span></p>
   <p class="oss">{FOOTER_OSS}</p>
 </div></footer>
 </body>
@@ -730,8 +738,7 @@ def render_terms(site: Site) -> str:
     元の権利は町・議会にある。議会事務局に掲載の可否を尋ねている最中なので、
     先回りして他人に広く使ってよいと許さない。回答が来たら広げられる。
 
-    プログラムのライセンス（MIT）には触れていない。GitHubリポジトリの扱いを
-    決めてから足す。
+    プログラムはMITライセンス（第3条4項）。会議録や要約には及ばないことを明記する。
     """
     sections = [
         ("第1条（本サイトについて）",
@@ -755,6 +762,8 @@ def render_terms(site: Site) -> str:
          "出典（本サイトの名称と該当ページ）を明示した引用の範囲でご利用いただけます。"
          "それを超えるご利用を希望される場合は、お問い合わせ先までご相談ください。</li>"
          "<li>前項は、AI要約のうち運営者が作成した部分についての定めです。AI要約のもとになった会議録の権利は、第1項の権利者にあります。</li>"
+         f'<li>本サイトのプログラム（ソースコード）は、<a href="{SOURCE_URL}">GitHub</a>で'
+         "MITライセンスのもとに公開しています。会議録・AI要約など、プログラム以外のものにはこのライセンスは及びません。</li>"
          "</ol>"),
         ("第4条（リンク）",
          "<p>本サイトへのリンクは自由です。事前のご連絡は必要ありません。"
@@ -795,7 +804,7 @@ def render_terms(site: Site) -> str:
 # ---------------------------------------------------------------- ことばで検索
 
 SEARCH_JS = Path(__file__).resolve().parents[2] / "site" / "assets" / "search.js"
-VOICES_SEARCH = "http://iasb-sv.town.onga.lg.jp/voices/index.asp"
+VOICES_SEARCH = VOICES_TOP
 
 
 def ai_text(summary: dict) -> str:
@@ -963,11 +972,16 @@ def render_about(site: Site) -> str:
         + "<h2>載せている期間</h2><div class=\"referral\">"
         f"このサイトが載せているのは<b>{esc(coverage_label(site))}以降</b>の会議録です。"
         "それより前の会議録は、下記の遠賀町議会 会議録検索システムでご覧になれます。</div>"
-        "<h2>お問い合わせ</h2>"
+        "<h2>ソースコード</h2>"
+        '<div class="referral">このサイトのプログラムは、'
+        f'<a href="{SOURCE_URL}">GitHub</a>でMITライセンスのもとに公開しています。'
+        "要約に使っている指示文（プロンプト）や、原文との照合の仕組みも読めます。"
+        "会議録検索システムは全国の議会で使われているため、他の自治体でも転用できます。</div>"
+        + "<h2>お問い合わせ</h2>"
         '<p class="lead">内容の誤りのご指摘や、掲載についてのご相談は、こちらまでお寄せください。</p>'
         + contact_block()
         + "<h2>データの出典</h2><div class=\"stack\">"
-        '<a class="card" href="http://iasb-sv.town.onga.lg.jp/voices/index.asp">'
+        f'<a class="card" href="{VOICES_TOP}">'
         '<span class="t">遠賀町議会 会議録検索システム（VOICES）</span>'
         '<span class="s">会議録の原文</span></a>'
         '<a class="card" href="https://www.town.onga.lg.jp/site/gikai/list20-62.html">'
