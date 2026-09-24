@@ -20,6 +20,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # `if:` の中では secrets を直接参照できない（書くとワークフロー全体が読み込めなくなる）。
+    # ジョブの環境変数に「設定されているか」だけを渡し、ステップの条件はそれを見る。
+    env:
+      HAS_XSERVER: ${{ secrets.XSERVER_HOST != '' }}
     steps:
       - name: コードを取得
         uses: actions/checkout@v4
@@ -42,7 +46,7 @@ jobs:
         run: python -m pipeline.build.site
 
       - name: 本番へ反映する
-        if: secrets.XSERVER_HOST != ''
+        if: env.HAS_XSERVER == 'true'
         env:
           XSERVER_HOST: ${{ secrets.XSERVER_HOST }}
           XSERVER_USER: ${{ secrets.XSERVER_USER }}
@@ -57,7 +61,7 @@ jobs:
           rm -f ~/xserver_key
 
       - name: 認証情報がない場合の案内
-        if: secrets.XSERVER_HOST == ''
+        if: env.HAS_XSERVER != 'true'
         run: |
           echo "XSERVER_HOST が未設定のため、ビルドだけ行いました。"
           echo "設定手順は docs/運用メモ.md「2. 用意するもの」を参照してください。"

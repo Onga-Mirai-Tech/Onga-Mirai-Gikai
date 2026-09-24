@@ -23,6 +23,10 @@ jobs:
   collect:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # `if:` の中では secrets を直接参照できない（書くとワークフロー全体が読み込めなくなる）。
+    # ジョブの環境変数に「設定されているか」だけを渡し、ステップの条件はそれを見る。
+    env:
+      HAS_XSERVER: ${{ secrets.XSERVER_HOST != '' }}
     steps:
       - name: コードを取得
         uses: actions/checkout@v4
@@ -85,7 +89,7 @@ jobs:
       # エックスサーバーの認証情報が入るまでは自動で飛ばされる。
       # 本番へは出さない。Basic認証付きのプレビュー領域にだけ置く。
       - name: プレビューへ反映する
-        if: steps.collect.outputs.remaining == '0' && secrets.XSERVER_HOST != ''
+        if: steps.collect.outputs.remaining == '0' && env.HAS_XSERVER == 'true'
         env:
           XSERVER_HOST: ${{ secrets.XSERVER_HOST }}
           XSERVER_USER: ${{ secrets.XSERVER_USER }}
