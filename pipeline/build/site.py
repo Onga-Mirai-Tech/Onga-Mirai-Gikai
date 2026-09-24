@@ -186,6 +186,7 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
     <a href="{root}">トップ</a>
     <a href="{root}meetings/">会議一覧</a>
     <a href="{root}members/">議員の発言</a>
+    <a href="{root}search/">ことばで検索</a>
     <a href="{root}about/">このサイトについて</a>
     <a href="{root}terms/">利用規約</a>
     <a href="{root}privacy/">プライバシーポリシー</a>
@@ -600,6 +601,7 @@ def render_index(site: Site) -> str:
         '<h2>さがす</h2><div class="chips">'
         '<a class="chip" href="meetings/">定例会・臨時会</a>'
         '<a class="chip" href="members/">議員の発言</a>'
+        '<a class="chip" href="search/">ことばで検索</a>'
         '<a class="chip" href="about/">このサイトについて</a>'
         "</div>"
         + latest_card
@@ -659,15 +661,21 @@ def render_privacy(site: Site) -> str:
     """プライバシーポリシー。
 
     **実際に集めているものだけを書く。** 2026-09-24 に確認した事実:
-    JavaScript・Cookie・ブラウザへの保存・外部からの読み込みは全ページでゼロ。
+    Cookie・ブラウザへの保存・外部からの読み込みは全ページでゼロ。
+    JavaScript は検索ページ（search.js）だけ。検索語はURLの「#」以降に持たせて
+    サーバーに送らない。
     集まるのはサーバー会社が自動で取るアクセスログ（AWStatsで集計）と、
     問い合わせのメールだけ。サイトに機能を足したら、ここも見直すこと。
     """
     sections = [
         ("1. 本サイトが集める情報",
          "<p>本サイトそのものは、利用者の情報を集めていません。本サイトはあらかじめ作成したページを配信するだけの仕組みで、"
-         "<b>Cookie（クッキー）、アクセス解析ツール、広告、JavaScriptを使っていません。</b>"
+         "<b>Cookie（クッキー）、アクセス解析ツール、広告を使っていません。</b>"
          "外部のサービスからフォントや画像を読み込むこともありません。</p>"
+         "<p>JavaScriptは「ことばで検索」のページでだけ使っています。検索はお使いの端末の中で行い、"
+         "<b>検索したことばは、本サイトのサーバーを含め、どこにも送られません。</b>"
+         "検索ページを開いたときに検索用の索引ファイルを取得したことはアクセスログに記録されますが、"
+         "検索したことばは記録されません。</p>"
          "<p>ただし、次の情報は取り扱います。</p>"
          "<ol>"
          "<li><b>アクセスログ</b>　本サイトを置いているレンタルサーバー（エックスサーバー株式会社）が、閲覧のたびに自動で記録します。"
@@ -777,6 +785,125 @@ def render_terms(site: Site) -> str:
         sections=sections,
         description="本サイトの位置づけ、AI要約の扱い、著作権、免責など。",
     )
+
+
+# ---------------------------------------------------------------- ことばで検索
+
+SEARCH_JS = Path(__file__).resolve().parents[2] / "site" / "assets" / "search.js"
+VOICES_SEARCH = "http://iasb-sv.town.onga.lg.jp/voices/index.asp"
+
+
+def ai_text(summary: dict) -> str:
+    """AI要約の本文を1つの文字列にする。検索の照合と抜粋に使う。"""
+    out: list[str] = []
+    for topic in summary.get("topics", []):
+        for pt in topic.get("points", []):
+            out += [pt.get("question", ""), pt.get("answer", "")]
+    out += [pt.get("text", "") for pt in summary.get("points", [])]
+    return "　".join(x for x in out if x)
+
+
+def bill_speakers(site: Site, bill: dict) -> list[str]:
+    """議案の質疑・討論で発言した議員。発言者での絞り込みに使う。"""
+    names: list[str] = []
+    for ref in bill["utterances"]:
+        tr = site.transcripts.get(ref["unid"])
+        if tr is None:
+            continue
+        u = next((x for x in tr.utterances if x.seq == ref["seq"]), None)
+        if u and u.kind == "質問者" and u.name and u.name not in names:
+            names.append(u.name)
+    return names
+
+
+def build_search_index(site: Site) -> list[dict]:
+    """検索の索引。ブラウザが1回だけ取ってきて、その中で探す。
+
+    `o` は公式の文言（通告書の質問事項・議案名・発言者名）、`s` はAI要約の本文。
+    分けて持つのは、AI要約にだけ一致した結果にそう表示するため。
+    会議録の原文は入れない（令和分だけで7MBを超え、町の会議録検索システムが
+    すでに全文検索を提供している）。
+    """
+    out: list[dict] = []
+    for t in site.threads:
+        if t["meeting_id"] not in site.meetings:
+            continue
+        s = site.summaries.get(t["id"])
+        topics = [x["title"] for x in t["topics"]]
+        out.append({
+            "k": "q",
+            "u": f"questions/{thread_slug(t)}/",
+            "t": thread_heading(t),
+            "m": site.meetings[t["meeting_id"]]["name"],
+            "d": t["on"],
+            "y": t["on"][:4],
+            "w": [t["questioner"]],
+            "o": " ".join([t["questioner"]] + topics),
+            "s": ai_text(s["summary"]) if s else "",
+            "tp": topics,
+        })
+    for b in site.bills:
+        if b["meeting_id"] not in site.meetings:
+            continue
+        s = site.summaries.get(b["id"])
+        who = bill_speakers(site, b)
+        on = b["decided_on"] or b["submitted_on"]
+        out.append({
+            "k": "b",
+            "u": f"bills/{bill_slug(b['id'])}/",
+            "t": f'{b["number"]}　{b["title"]}',
+            "m": site.meetings[b["meeting_id"]]["name"],
+            "d": on,
+            "y": on[:4],
+            "w": who,
+            "o": " ".join([b["number"], b["title"]] + who),
+            "s": ai_text(s["summary"]) if s else "",
+        })
+    return out
+
+
+def render_search(site: Site, index: list[dict]) -> str:
+    depth = 1
+    who = sorted({w for e in index for w in e["w"]})
+    years = sorted({e["y"] for e in index}, reverse=True)
+    opt = lambda v, label: f'<option value="{esc(v)}">{esc(label)}</option>'
+    v = css_version(str(SEARCH_JS))
+    body = (
+        crumb(depth, ("ことばで検索", ""))
+        + "<h1>ことばで検索</h1>"
+        + '<p class="lead">一般質問の質問事項・議案名・発言者と、AI要約の本文から探します。'
+        "新しい順に並びます。</p>"
+        + '<form id="search-form" class="search" data-root="../" role="search">'
+        '<label class="sr" for="q">さがすことば</label>'
+        '<div class="search-row"><input id="q" name="q" type="search" autocomplete="off" '
+        'placeholder="例：給食　デマンドバス" enterkeyhint="search">'
+        '<button type="submit">検索</button></div>'
+        '<div class="search-filters">'
+        '<label>発言者<select id="w"><option value="">すべて</option>'
+        + "".join(opt(w, w) for w in who) + "</select></label>"
+        '<label>年<select id="y"><option value="">すべて</option>'
+        + "".join(opt(y, f"{y}年") for y in years) + "</select></label>"
+        '<label>種類<select id="k"><option value="">すべて</option>'
+        + opt("q", "一般質問") + opt("b", "議案") + "</select></label>"
+        "</div></form>"
+        + '<p id="search-status" class="meta" role="status" aria-live="polite"></p>'
+        + '<div id="search-results" class="stack"></div>'
+        + '<noscript><div class="referral">この検索はJavaScriptを使います。'
+        "お使いのブラウザでJavaScriptが無効になっているため、検索できません。"
+        '<a href="../meetings/">会議一覧</a>から探すこともできます。</div></noscript>'
+        + '<h2>会議録の本文から探す</h2>'
+        '<div class="referral">発言の本文すべてから探す場合は、遠賀町議会の'
+        f'<a href="{VOICES_SEARCH}">会議録検索システム</a>をお使いください（外部サイト）。</div>'
+        + '<h2>検索について</h2><div class="prose"><ul>'
+        "<li>検索は<b>お使いの端末の中だけ</b>で行います。検索したことばは、本サイトのサーバーを含め、どこにも送られません。</li>"
+        "<li><b>「AI要約に一致」</b>と表示された結果は、AIが書いた要約の中にことばが見つかったものです。"
+        "AIの言い換えに一致しただけで、発言の原文にそのことばがあるとは限りません。</li>"
+        "<li>複数のことばを空白で区切ると、すべてを含むものを探します。</li>"
+        "</ul></div>"
+        + f'<script src="../assets/search.js?v={v}" defer></script>'
+    )
+    return page(site, title="ことばで検索", body=body, depth=depth,
+                description="一般質問の質問事項・議案名・発言者と、AI要約の本文から探します。")
 
 
 def render_about(site: Site) -> str:
@@ -1138,6 +1265,11 @@ def main(argv: list[str] | None = None) -> int:
     write(out / "index.html", render_index(site))
     write(out / "about" / "index.html", render_about(site))
     write(out / "privacy" / "index.html", render_privacy(site))
+    index = build_search_index(site)
+    write(out / "search" / "index.html", render_search(site, index))
+    # 区切りを詰めて小さくする。エックスサーバーが圧縮して送るので、さらに小さくなる。
+    write(out / "search" / "index.json",
+          json.dumps(index, ensure_ascii=False, separators=(",", ":")))
     write(out / "terms" / "index.html", render_terms(site))
     write(out / "meetings" / "index.html", render_meeting_index(site))
     for mid, m in site.meetings.items():
