@@ -73,10 +73,6 @@ jobs:
           python -m pipeline.parse.bills
           python -m pipeline.parse.threads
 
-      - name: 通告書を読む
-        if: ${{ !inputs.limit }}
-        run: python -m pipeline.parse.tsukokusho || true
-
       - name: 要約を投入する（回収はしない）
         if: ${{ !inputs.limit }}
         env:
