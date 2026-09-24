@@ -264,3 +264,14 @@ h2::after { content: ""; flex: 1; height: 1px; background: var(--rule-soft); }
 
 /* 政党との関係の断り。町・議会の断りと同じ強さで、すぐ下に並べる。 */
 .site-foot .notice.party { margin-top: 14px; }
+
+/* ---- 規約類（利用規約・プライバシーポリシー） ----
+ * 長文を読むためのページ。カードに分けず、紙の上に文章を置く。
+ */
+.prose { font-size: 14.5px; line-height: 1.95; color: var(--ink); }
+.prose p { margin: 0 0 .8em; }
+.prose p:last-child { margin-bottom: 0; }
+.prose ol, .prose ul { margin: 0 0 .8em; padding-left: 1.5em; }
+.prose li { margin: .35em 0; }
+.prose li::marker { color: var(--muted); }
+.meta.enacted { margin-top: 28px; text-align: right; }
