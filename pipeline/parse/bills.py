@@ -75,7 +75,9 @@ _RESULT_WORDS = (
 _RESULT_SENT_RE = re.compile(r"よって[、，]?[^。]{0,80}")
 _RESULT_WORD_RE = re.compile("|".join(_RESULT_WORDS))
 
-_MEETING_RE = re.compile(r"(令和|平成|昭和)(\d+)年第(\d+)回(定例会|臨時会)")
+# 「令和元年」の「元」は数字ではない。会議録がそう書いているので、そのまま受ける。
+# `\d+` だけにすると令和元年の会議IDが作れず、IDに会議名がそのまま入ってしまう。
+_MEETING_RE = re.compile(r"(令和|平成|昭和)(元|\d+)年第(\d+)回(定例会|臨時会)")
 _ERA_BASE = {"昭和": 1925, "平成": 1988, "令和": 2018}
 
 
@@ -86,7 +88,7 @@ def meeting_id(title_raw: str) -> tuple[str, str]:
     if not m:
         return name, name
     era, yy, no, kind = m.groups()
-    year = _ERA_BASE[era] + int(yy)
+    year = _ERA_BASE[era] + (1 if yy == "元" else int(yy))
     return f"{year}-{'t' if kind == '定例会' else 'r'}{no}", name
 
 
@@ -138,6 +140,15 @@ class Bill:
         return any(self.content.get(k) for k in ("質疑", "討論"))
 
 
+def _mentions(text: str, number: str) -> bool:
+    """その文が、この議案番号を名指ししているか。
+
+    一括議題では1つの発言に複数の議案番号が出るので、
+    どの議案の話かを番号で見分ける。
+    """
+    return number in T.squeeze(text)
+
+
 def _agenda_map(tr: T.Transcript) -> dict[int, tuple[str, str]]:
     """議事日程の行から 日程番号 → (議案番号, 件名) を作る。"""
     out: dict[int, tuple[str, str]] = {}
@@ -157,6 +168,31 @@ def _agenda_map(tr: T.Transcript) -> dict[int, tuple[str, str]]:
     return out
 
 
+# 「議案第50号から、／議案第59号までを、一括して議題と致します」
+# 決算認定は必ずこの形で10件まとめて処理される。範囲を展開しないと、
+# 委員長報告・討論・採決のすべてを取りこぼす（実測: 令和分で55件）。
+_RANGE_RE = re.compile(
+    r"(議案|報告|発議|発委|意見書案|請願|陳情|諮問|承認)第\s*([０-９0-9]+)\s*号から[、，]?\s*"
+    r"(?:(?:議案|報告|発議|発委|意見書案|請願|陳情|諮問|承認)第\s*)?([０-９0-9]+)\s*号まで"
+)
+
+
+def _range_numbers(text: str, amap: dict[int, tuple[str, str]]) -> list[str]:
+    """一括議題の範囲を議案番号の並びに開く。
+
+    **議事日程に載っている番号だけ**を返す。範囲の間に欠番があることがあり
+    （撤回・不上程）、機械的に埋めると存在しない議案を作ってしまう。
+    """
+    m = _RANGE_RE.search(T.squeeze(text))
+    if not m:
+        return []
+    kind, lo, hi = m.group(1), int(T.squeeze(m.group(2))), int(T.squeeze(m.group(3)))
+    if hi < lo or hi - lo > 60:
+        return []
+    known = {num for num, _title in amap.values()}
+    return [n for n in (bill_number(kind, str(i)) for i in range(lo, hi + 1)) if n in known]
+
+
 def extract_day(tr: T.Transcript, on: date) -> dict[str, dict]:
     """1日分から、議案番号ごとの出来事を拾う。"""
     amap = _agenda_map(tr)
@@ -165,42 +201,65 @@ def extract_day(tr: T.Transcript, on: date) -> dict[str, dict]:
                  "committees": [], "referred_on": "", "vote": None, "result": None,
                  "content": {}}
     )
-    current: str | None = None
+    currents: list[str] = []
     agenda_no: int | None = None
     pending: str | None = None
+    utterances = list(tr.utterances)
+    # 範囲指定の後半（「議案第59号までを、…」）を日程行として読み直さないための印。
+    # そのまま読むと、一括議題が最後の1件だけの議題にすり替わる。
+    consumed = -1
 
-    for u in tr.utterances:
-        if u.kind in ("日程", "追加日程"):
+    for i, u in enumerate(utterances):
+        if u.kind in ("日程", "追加日程") and i != consumed:
             agenda_no = u.agenda_no
             pending = None
+            # 範囲指定は2つの日程行に割れることがある（「…から、」「…までを、」）。
+            # 次の日程行までをつないで見る。
+            joined = u.text
+            nxt = i + 1 < len(utterances) and utterances[i + 1].kind in ("日程", "追加日程")
+            if nxt:
+                joined += utterances[i + 1].text
+            ranged = _range_numbers(joined, amap)
+            if ranged and nxt and not _range_numbers(u.text, amap):
+                consumed = i + 1  # 後半は範囲の一部。単独の日程として読まない。
+
             mapped = amap.get(u.agenda_no or -1)
             in_body = _NUM_RE.search(u.text)
-            if mapped:
-                current = mapped[0]
-                events[current]["title"] = events[current]["title"] or mapped[1]
+            if ranged:
+                currents = ranged
+            elif mapped:
+                currents = [mapped[0]]
+                events[mapped[0]]["title"] = events[mapped[0]]["title"] or mapped[1]
             elif in_body:
-                current = bill_number(in_body.group(1), in_body.group(2))
+                currents = [bill_number(in_body.group(1), in_body.group(2))]
             else:
-                current = None  # 会期の決定・一般質問など、議案でない日程
-            if current:
-                ev = events[current]
+                currents = []  # 会期の決定・一般質問など、議案でない日程
+
+            for number in currents:
+                ev = events[number]
                 ev["stages"].append(Stage("上程", str(on), tr.unid, agenda_no, u.seq))
                 if not ev["title"]:
                     mt = _TITLE_RE.search(u.text)
                     if mt:
                         ev["title"] = mt.group(1).strip()
+                    elif number in {n for n, _ in amap.values()}:
+                        ev["title"] = next(ti for n, ti in amap.values() if n == number)
 
-        if not current:
+        if not currents:
             continue
-        ev = events[current]
-        ev["utterances"].append({"unid": tr.unid, "seq": u.seq, "huid": u.huid})
-        text = u.text
 
-        for kind, pat in _STAGE_MARKERS:
-            if pat.search(text):
-                ev["stages"].append(Stage(kind, str(on), tr.unid, agenda_no, u.seq))
-                if kind in ("質疑", "討論"):
-                    pending = kind
+        text = u.text
+        for number in currents:
+            events[number]["utterances"].append(
+                {"unid": tr.unid, "seq": u.seq, "huid": u.huid})
+
+        # 段階・質疑討論の有無・付託は、一括議題なら全件に等しくかかる。
+        stages_here = [kind for kind, pat in _STAGE_MARKERS if pat.search(text)]
+        for kind in stages_here:
+            for number in currents:
+                events[number]["stages"].append(Stage(kind, str(on), tr.unid, agenda_no, u.seq))
+            if kind in ("質疑", "討論"):
+                pending = kind
 
         # 「───　質疑なし　───」のト書きが出れば実体なし。
         # 質問者・答弁者の発言が続けば実体あり。
@@ -209,42 +268,58 @@ def extract_day(tr: T.Transcript, on: date) -> dict[str, dict]:
             # 「討論は、ございませんか」は問いかけであって不在の宣言ではない。
             # 判定はト書き（───　討論なし　───）だけに頼る。
             if f"{pending}なし" in notes_joined:
-                ev["content"][pending] = False
+                for number in currents:
+                    events[number]["content"][pending] = False
                 pending = None
             elif u.kind in ("質問者", "答弁者"):
-                ev["content"][pending] = True
+                for number in currents:
+                    events[number]["content"][pending] = True
                 pending = None
             elif any(p.search(text) for _k, p in _STAGE_MARKERS if _k not in (pending,)):
                 pending = None
 
         if _REFERRAL_OMIT_RE.search(text):
-            ev["referral"] = "omitted"
-            ev["referred_on"] = ev["referred_on"] or str(on)
+            for number in currents:
+                events[number]["referral"] = "omitted"
+                events[number]["referred_on"] = events[number]["referred_on"] or str(on)
         for m in _REFERRAL_RE.finditer(text):
-            ev["referral"] = "committee"
-            ev["referred_on"] = ev["referred_on"] or str(on)
-            for c in split_committees(m.group(1)):
-                if c not in ev["committees"]:
-                    ev["committees"].append(c)
+            for number in currents:
+                ev = events[number]
+                ev["referral"] = "committee"
+                ev["referred_on"] = ev["referred_on"] or str(on)
+                for c in split_committees(m.group(1)):
+                    if c not in ev["committees"]:
+                        ev["committees"].append(c)
 
-        notes = "".join(u.notes)
-        if "賛成者起立" in notes:
+        # 採決と議決結果は、一括議題でも**議案ごとに**宣言される。
+        # 「よって、議案第50号…は、認定することに決しました。続きまして、議案第51号…」
+        # 全件に同じ結果を配ると、1件だけ否決された場合に取り違える。
+        named = [n for n in currents if _mentions(text, n)]
+        targets = named or currents
+
+        if "賛成者起立" in notes_joined:
             mt = _TALLY_RE.search(text)
-            ev["vote"] = (
-                Vote("起立", int(T.squeeze(mt.group(1))), int(T.squeeze(mt.group(2))),
-                     int(T.squeeze(mt.group(3))))
-                if mt else Vote("起立")
-            )
-        elif "異議なし" in notes and ev["vote"] is None:
-            ev["vote"] = Vote("異議なし")
+            vote = (Vote("起立", int(T.squeeze(mt.group(1))), int(T.squeeze(mt.group(2))),
+                         int(T.squeeze(mt.group(3)))) if mt else Vote("起立"))
+            for number in targets:
+                if events[number]["vote"] is None:
+                    events[number]["vote"] = vote
+        elif "異議なし" in notes_joined:
+            for number in targets:
+                if events[number]["vote"] is None:
+                    events[number]["vote"] = Vote("異議なし")
 
-        if ev["result"] is None:
-            for sent in _RESULT_SENT_RE.findall(text):
-                mw = _RESULT_WORD_RE.search(sent)
-                if mw:
+        for sent in _RESULT_SENT_RE.findall(text):
+            mw = _RESULT_WORD_RE.search(sent)
+            if not mw:
+                continue
+            in_sent = [n for n in currents if _mentions(sent, n)]
+            for number in (in_sent or targets):
+                ev = events[number]
+                if ev["result"] is None:
                     ev["result"] = mw.group(0)
                     ev["stages"].append(Stage("議決", str(on), tr.unid, agenda_no, u.seq))
-                    break
+
     return events
 
 

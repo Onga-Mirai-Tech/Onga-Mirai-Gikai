@@ -148,3 +148,32 @@ class TestBillNumber(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBulkAgenda(unittest.TestCase):
+    """一括議題（「議案第50号から議案第59号までを、一括して議題と致します」）。
+
+    決算認定は必ずこの形で処理される。範囲を開かないと、委員長報告・討論・採決を
+    まるごと取りこぼす（実測: 令和分の議案55件で議決結果が取れていなかった）。
+    """
+
+    AMAP = {6: ("議案第50号", "一般会計決算"), 7: ("議案第51号", "国保決算"),
+            8: ("議案第52号", "霊園決算")}
+
+    def test_expands_a_range(self):
+        got = B._range_numbers("議案第５０号から、議案第５２号までを、一括して議題と致します。", self.AMAP)
+        self.assertEqual(got, ["議案第50号", "議案第51号", "議案第52号"])
+
+    def test_only_numbers_on_the_agenda(self):
+        # 範囲の間に欠番があることがある。機械的に埋めると存在しない議案を作る。
+        got = B._range_numbers("議案第５０号から、議案第５９号までを、一括して議題と致します。", self.AMAP)
+        self.assertEqual(got, ["議案第50号", "議案第51号", "議案第52号"])
+
+    def test_a_single_bill_is_not_a_range(self):
+        self.assertEqual(B._range_numbers("議案第５０号を議題と致します。", self.AMAP), [])
+
+    def test_mentions_finds_the_named_bill(self):
+        # 一括議題でも議決は議案ごとに宣言される。どの議案の話かを番号で見分ける。
+        sent = "よって、議案第５０号は、認定することに決しました。"
+        self.assertTrue(B._mentions(sent, "議案第50号"))
+        self.assertFalse(B._mentions(sent, "議案第51号"))
