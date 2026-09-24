@@ -176,12 +176,14 @@ def split_threads(tr: T.Transcript, on: date) -> list[Thread]:
     return threads
 
 
-_NOTICE_MEETING_RE = re.compile(r"(令和|平成|昭和)\s*([０-９0-9]+)\s*年.*?第\s*([０-９0-9]+)\s*回")
+# 「令和元年」の「元」は数字ではない。年の欄は数字だけだと令和元年を読めない
+# （同じ不具合が bills.py・site.py・kekka.py にもあった。まとめて見直した 2026-09-24）。
+_NOTICE_MEETING_RE = re.compile(r"(令和|平成|昭和)\s*(元|[０-９0-9]+)\s*年.*?第\s*([０-９0-9]+)\s*回")
 _ERA_BASE = {"昭和": 1925, "平成": 1988, "令和": 2018}
 _ZEN = str.maketrans("０１２３４５６７８９", "0123456789")
 
 
-_FILE_LABEL_RE = re.compile(r"(令和|平成|昭和)\s*([０-９0-9]+)\s*年\s*([０-９0-9]+)\s*月")
+_FILE_LABEL_RE = re.compile(r"(令和|平成|昭和)\s*(元|[０-９0-9]+)\s*年\s*([０-９0-9]+)\s*月")
 
 
 def notice_year_month(filename: str) -> str | None:
@@ -196,7 +198,7 @@ def notice_year_month(filename: str) -> str | None:
     if not m:
         return None
     era, yy, mm = m.groups()
-    return f"{_ERA_BASE[era] + int(yy)}-{int(mm):02d}"
+    return f"{_ERA_BASE[era] + (1 if yy == '元' else int(yy))}-{int(mm):02d}"
 
 
 def load_notices(dir_path: Path, aliases: dict[str, str] | None = None) -> dict[str, list]:

@@ -254,6 +254,10 @@ def render_ai_thread(site: Site, thread: dict) -> str:
     if not s:
         return ""
     unid = thread["unid"]
+    # 見出しは通告書の文言を使う。番号が合えば、AIの言い換えを見出しにする理由がない。
+    # 通告書は公式の文言で、AIの見出しは「中高年の引きこもり」（通告書は「ひきこもり」）
+    # のように少しずつ言い換わる（実測: 5件）。
+    official = {x["no"]: x["title"] for x in thread.get("topics") or []}
     blocks = []
     for topic in s["summary"].get("topics", []):
         points = "".join(
@@ -264,9 +268,10 @@ def render_ai_thread(site: Site, thread: dict) -> str:
             + "</div>"
             for pt in topic.get("points", [])
         )
+        heading = official.get(topic.get("no"), topic.get("title", ""))
         blocks.append(
             f'<h3 id="t{topic.get("no", "")}">{topic.get("no", "")}. '
-            f'{esc(topic.get("title", ""))}</h3>{points}')
+            f'{esc(heading)}</h3>{points}')
     if not blocks:
         return ""
     return (f'<h2>AI要約</h2><div class="ai"><p class="tag">{AI_NOTE}</p>'

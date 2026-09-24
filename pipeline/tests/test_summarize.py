@@ -96,6 +96,29 @@ class TestVerify(unittest.TestCase):
         self.assertIn("原文にない数字", [i["kind"] for i in r["issues"]])
 
 
+class TestNoticeCount(unittest.TestCase):
+    """質問事項の数が通告書と合わない要約は落とす（docs/設計ドラフト.md「検証」）。"""
+
+    NOTICE = [{"no": 1, "title": "遠賀川駅南地区の開発について"}]
+
+    def thread(self, n):
+        return {"topics": [{"no": i + 1, "title": f"t{i}",
+                            "points": [{"question": "q", "answer": "a", "huids": [41305]}]}
+                           for i in range(n)]}
+
+    def test_over_split_summary_is_not_verified(self):
+        # 通告書がないまま作った要約は、1項目を小問ごとに7個へ割ることがある（実測）
+        r = R.verify("thread", self.thread(7), SOURCE, self.NOTICE)
+        self.assertFalse(r["verified"])
+        self.assertIn("質問事項の数が通告書と合わない", [i["kind"] for i in r["issues"]])
+
+    def test_matching_count_is_verified(self):
+        self.assertTrue(R.verify("thread", self.thread(1), SOURCE, self.NOTICE)["verified"])
+
+    def test_without_a_notice_the_count_is_not_checked(self):
+        self.assertTrue(R.verify("thread", self.thread(7), SOURCE, None)["verified"])
+
+
 class TestCustomId(unittest.TestCase):
     def test_is_safe_for_the_batch_api(self):
         # custom_id に使えるのは英数字と `_-` だけ。議案IDは日本語を含むので使えない。

@@ -153,7 +153,7 @@ def shape_ok(kind: str, data: dict) -> bool:
     return all(isinstance(p, dict) and p.get("kind") and p.get("text") for p in points)
 
 
-def verify(kind: str, data: dict, body: str) -> dict:
+def verify(kind: str, data: dict, body: str, notice: list | None = None) -> dict:
     """機械で見られるところだけ見る。ここで落ちたものは人が確認する。
 
     `docs/設計ドラフト.md`「検証（verify）」のうち、要約単体で判定できるもの。
@@ -167,13 +167,22 @@ def verify(kind: str, data: dict, body: str) -> dict:
         issues.append({"kind": "実在しない発言ID", "detail": huids})
     if not V._all_huids(data):
         issues.append({"kind": "根拠の発言IDがない", "detail": []})
+    # 質問事項の数が通告書と合うか（docs/設計ドラフト.md「検証」）。
+    # 設計には書いてあったのに実装していなかった。通告書がないまま作った要約は、
+    # 1つの質問事項を小問ごとに7〜8個へ割ることがある（実測: 2件）。
+    # 数が合わないと、通告書の項目から要約へのリンクが別の話題に飛ぶ。
+    if kind == "thread" and notice:
+        got = len(V._dicts(data.get("topics")))
+        if got != len(notice):
+            issues.append({"kind": "質問事項の数が通告書と合わない",
+                           "detail": [f"通告書 {len(notice)}件 / 要約 {got}件"]})
     return {"verified": not issues, "issues": issues}
 
 
 def save(root: Path, kind: str, item: dict, data: dict, body: str, usage: dict) -> bool:
     d = out_dir(root, kind)
     d.mkdir(parents=True, exist_ok=True)
-    checks = verify(kind, data, body)
+    checks = verify(kind, data, body, item.get("topics") if kind == "thread" else None)
     payload = {
         "id": item["id"],
         "kind": kind,
@@ -287,6 +296,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--regenerate", action="store_true",
                     help="生成済みも作り直す。プロンプトを変えたときだけ使う")
     ap.add_argument("--limit", type=int, help="この件数だけ投げる（動作確認用）")
+    ap.add_argument("--ids", nargs="+", metavar="ID",
+                    help="この一般質問・議案だけを対象にする。--regenerate と組み合わせて、"
+                         "検証で落ちた要約だけを作り直すときに使う")
     ap.add_argument("--count", action="store_true",
                     help="未生成の件数だけを出す。ワークフローの分岐に使う")
     ap.add_argument("--reverify", action="store_true",
@@ -315,7 +327,8 @@ def main(argv: list[str] | None = None) -> int:
                 body = (C.thread_input(root, item) if kind == "thread"
                         else C.bill_input(root, item))
                 before = s.get("verified")
-                s.update(verify(kind, s["summary"], body))
+                s.update(verify(kind, s["summary"], body,
+                                item.get("topics") if kind == "thread" else None))
                 if s["verified"] != before:
                     changed += 1
                     print(f"  {s['id']}: {before} → {s['verified']}")
@@ -341,6 +354,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     items = targets(root, args.regenerate)
+    if args.ids:
+        # 全件の作り直しを誤って走らせないよう、--regenerate は --ids と組み合わせて使う。
+        wanted = set(args.ids)
+        items = [x for x in items if x[1]["id"] in wanted]
+        missing = wanted - {x[1]["id"] for x in items}
+        if missing:
+            print(f"  対象に見つからないID: {sorted(missing)}")
     if args.only:
         items = [x for x in items if x[0] == args.only]
     if args.limit:
