@@ -287,6 +287,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--regenerate", action="store_true",
                     help="生成済みも作り直す。プロンプトを変えたときだけ使う")
     ap.add_argument("--limit", type=int, help="この件数だけ投げる（動作確認用）")
+    ap.add_argument("--count", action="store_true",
+                    help="未生成の件数だけを出す。ワークフローの分岐に使う")
     ap.add_argument("--reverify", action="store_true",
                     help="保存済みの要約を、いまの検証でもう一度確かめる（APIは使わない）")
     ap.add_argument("--only", choices=("thread", "bill"),
@@ -294,6 +296,11 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     root = Path(__file__).resolve().parents[2]
+
+    if args.count:
+        # 数字だけを出す。回収が終わったかどうかをワークフローが判断するために使う。
+        print(len(targets(root, regenerate=False)))
+        return 0
 
     if args.reverify:
         # 検証のやり方を直したときに使う。要約そのものは作り直さない。

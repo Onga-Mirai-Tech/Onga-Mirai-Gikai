@@ -1,0 +1,63 @@
+name: deploy
+
+# main に入った内容を本番へ反映する。
+#
+# 自動で本番公開しない方針（CLAUDE.md）に対して、ここが「人が確認した後」にあたる。
+# summarize-collect.yml が作ったPRを人が見てマージしたときだけ動く。
+# 手動実行も残しておく（デザインだけ直したときなど）。
+#
+# エックスサーバーの認証情報が入るまでは、ビルドまでで止まる。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: コードを取得
+        uses: actions/checkout@v4
+
+      - name: データを取得（private リポジトリ）
+        uses: actions/checkout@v4
+        with:
+          repository: Onga-Mirai-Tech/Onga-Mirai-Gikai-data
+          path: data
+          ssh-key: ${{ secrets.DATA_REPO_DEPLOY_KEY }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 依存をインストール
+        run: pip install -r requirements.txt
+
+      - name: サイトをビルドする
+        run: python -m pipeline.build.site
+
+      - name: 本番へ反映する
+        if: secrets.XSERVER_HOST != ''
+        env:
+          XSERVER_HOST: ${{ secrets.XSERVER_HOST }}
+          XSERVER_USER: ${{ secrets.XSERVER_USER }}
+          XSERVER_SSH_KEY: ${{ secrets.XSERVER_SSH_KEY }}
+          XSERVER_PUBLIC_DIR: ${{ secrets.XSERVER_PUBLIC_DIR }}
+        run: |
+          install -m 600 /dev/stdin ~/xserver_key <<< "$XSERVER_SSH_KEY"
+          # .htaccess はサーバー側の設定（常時SSL化など）。ビルド結果で消さない。
+          rsync -az --delete --exclude=.htaccess --exclude=.htpasswd \
+            -e "ssh -i ~/xserver_key -p 10022 -o StrictHostKeyChecking=accept-new" \
+            dist/ "$XSERVER_USER@$XSERVER_HOST:$XSERVER_PUBLIC_DIR/"
+          rm -f ~/xserver_key
+
+      - name: 認証情報がない場合の案内
+        if: secrets.XSERVER_HOST == ''
+        run: |
+          echo "XSERVER_HOST が未設定のため、ビルドだけ行いました。"
+          echo "設定手順は docs/運用メモ.md「2. 用意するもの」を参照してください。"

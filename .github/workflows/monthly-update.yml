@@ -1,6 +1,12 @@
-name: monthly-fetch
+name: monthly-update
 
-# 会議録と資料の取得を月1回。
+# 月1回、会議録を取り込んで要約の生成まで進める。
+#
+# **要約の回収はこのワークフローでは行わない。** Batch API は完了まで
+# 数分から十数時間かかり（実測: 議案152件で4分、一般質問48件で11時間）、
+# GitHub Actions の1ジョブの上限6時間に収まる保証がない。
+# 投入だけして `data/.update-in-flight` を置き、回収と公開の準備は
+# summarize-collect.yml が引き継ぐ。
 #
 # 取得マナー（CLAUDE.md）:
 #   - 日本時間の深夜帯に実行する
@@ -60,6 +66,32 @@ jobs:
         if: ${{ !inputs.limit }}
         run: python -m pipeline.fetch.town --refresh-index
 
+      - name: 整形（発言者・議案・一般質問）
+        if: ${{ !inputs.limit }}
+        run: |
+          python -m pipeline.parse.speakers
+          python -m pipeline.parse.bills
+          python -m pipeline.parse.threads
+
+      - name: 通告書を読む
+        if: ${{ !inputs.limit }}
+        run: python -m pipeline.parse.tsukokusho || true
+
+      - name: 要約を投入する（回収はしない）
+        if: ${{ !inputs.limit }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          remaining=$(python -m pipeline.summarize.run --count)
+          echo "未生成の要約: ${remaining}件"
+          if [ "$remaining" = "0" ]; then
+            echo "投入するものはありません。"
+            exit 0
+          fi
+          python -m pipeline.summarize.run --no-wait
+          # 回収待ちであることを summarize-collect.yml に伝える
+          date -u +%Y-%m-%dT%H:%M:%SZ > data/.update-in-flight
+
       - name: データをdataリポジトリへ push
         working-directory: data
         run: |
@@ -70,7 +102,7 @@ jobs:
           git config user.name "onga-mirai-gikai-bot"
           git config user.email "noreply@github.com"
           git add -A
-          git commit -m "月次取得 $(date -u +%Y-%m-%d)"
+          git commit -m "月次取得と要約の投入 $(date -u +%Y-%m-%d)"
           git push
 
       # state.json は「何をどこから取ったか」の記録で、人が直す余地はない。

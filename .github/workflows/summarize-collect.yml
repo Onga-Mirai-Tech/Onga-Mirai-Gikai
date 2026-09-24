@@ -1,0 +1,153 @@
+name: summarize-collect
+
+# 投入した要約を回収し、検証・ビルドまで進めて Pull Request を作る。
+#
+# monthly-update.yml から分けてあるのは、Batch API の完了までが読めないため。
+# 実測で4分から11時間まで幅がある。GitHub Actions の1ジョブは6時間で切れるので、
+# 待ち続ける作りにはできない。3時間おきに様子を見て、終わっていれば先へ進む。
+#
+# `data/.update-in-flight` があるときだけ動く。monthly-update.yml が置き、
+# PRを作った時点で消す。何も起きていないときに空のPRを作らないための印。
+
+on:
+  schedule:
+    # 3時間おき。回収そのものは数秒で終わる。
+    - cron: "0 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: コードを取得
+        uses: actions/checkout@v4
+
+      - name: データを取得（private リポジトリ）
+        uses: actions/checkout@v4
+        with:
+          repository: Onga-Mirai-Tech/Onga-Mirai-Gikai-data
+          path: data
+          ssh-key: ${{ secrets.DATA_REPO_DEPLOY_KEY }}
+
+      - name: 回収待ちがあるか確認する
+        id: flight
+        run: |
+          if [ -f data/.update-in-flight ]; then
+            echo "投入: $(cat data/.update-in-flight)"
+            echo "go=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "回収待ちはありません。"
+            echo "go=no" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.flight.outputs.go == 'yes'
+        with:
+          python-version: "3.12"
+
+      - name: 依存をインストール
+        if: steps.flight.outputs.go == 'yes'
+        run: pip install -r requirements.txt
+
+      - name: 要約を回収する
+        id: collect
+        if: steps.flight.outputs.go == 'yes'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python -m pipeline.summarize.run --collect
+          remaining=$(python -m pipeline.summarize.run --count)
+          echo "未生成の要約: ${remaining}件"
+          echo "remaining=${remaining}" >> "$GITHUB_OUTPUT"
+
+      # まだ処理中なら、何もせず次の実行に回す。
+      # 失敗したぶんは保存していないので、投げ直しも自動で効く。
+      - name: まだ終わっていない
+        if: steps.flight.outputs.go == 'yes' && steps.collect.outputs.remaining != '0'
+        run: echo "Batch API の処理が続いています。次回の実行で再度確認します。"
+
+      - name: 議決結果を照合する
+        if: steps.collect.outputs.remaining == '0'
+        run: python -m pipeline.verify.results --report "data/verify/結果照合.md"
+
+      - name: サイトをビルドする
+        id: build
+        if: steps.collect.outputs.remaining == '0'
+        run: |
+          python -m pipeline.build.site | tee /tmp/build.log
+          echo "summary=$(grep -E '^会議 ' /tmp/build.log | head -1)" >> "$GITHUB_OUTPUT"
+
+      # エックスサーバーの認証情報が入るまでは自動で飛ばされる。
+      # 本番へは出さない。Basic認証付きのプレビュー領域にだけ置く。
+      - name: プレビューへ反映する
+        if: steps.collect.outputs.remaining == '0' && secrets.XSERVER_HOST != ''
+        env:
+          XSERVER_HOST: ${{ secrets.XSERVER_HOST }}
+          XSERVER_USER: ${{ secrets.XSERVER_USER }}
+          XSERVER_SSH_KEY: ${{ secrets.XSERVER_SSH_KEY }}
+          XSERVER_PREVIEW_DIR: ${{ secrets.XSERVER_PREVIEW_DIR }}
+        run: |
+          install -m 600 /dev/stdin ~/xserver_key <<< "$XSERVER_SSH_KEY"
+          # .htaccess / .htpasswd はアクセス制限の実体。消すとBasic認証が外れる。
+          rsync -az --delete --exclude=.htaccess --exclude=.htpasswd \
+            -e "ssh -i ~/xserver_key -p 10022 -o StrictHostKeyChecking=accept-new" \
+            dist/ "$XSERVER_USER@$XSERVER_HOST:$XSERVER_PREVIEW_DIR/"
+          rm -f ~/xserver_key
+
+      - name: データをdataリポジトリへ push
+        if: steps.collect.outputs.remaining == '0'
+        working-directory: data
+        run: |
+          rm -f .update-in-flight
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "dataリポジトリに変更はありません。"
+            exit 0
+          fi
+          git config user.name "onga-mirai-gikai-bot"
+          git config user.email "noreply@github.com"
+          git add -A
+          git commit -m "要約を回収 $(date -u +%Y-%m-%d)"
+          git push
+
+      # 公開物は自動で本番に出さない（CLAUDE.md）。
+      # 人が確認してマージしたら、deploy.yml が本番へ反映する。
+      - name: Pull Request を作る
+        if: steps.collect.outputs.remaining == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="update/$(date -u +%Y-%m%d-%H%M)"
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "公開リポジトリ側に変更がないため、PRは作りません。"
+            exit 0
+          fi
+          git config user.name "onga-mirai-gikai-bot"
+          git config user.email "noreply@github.com"
+          git checkout -b "$branch"
+          git add -A
+          git commit -m "月次更新 $(date -u +%Y-%m-%d)"
+          git push -u origin "$branch"
+
+          {
+            echo "## 更新の内容"
+            echo
+            echo '```'
+            echo "${{ steps.build.outputs.summary }}"
+            echo '```'
+            echo
+            echo "## 議決結果の照合"
+            echo
+            echo "会議録から読み取った議決結果を、町公式HPの「審議案件・結果」PDFと突き合わせた結果です。"
+            echo
+            sed -n '1,60p' "data/verify/結果照合.md"
+            echo
+            echo "---"
+            echo "確認してマージすると本番へ反映されます。"
+          } > /tmp/pr-body.md
+
+          gh pr create --title "月次更新 $(date -u +%Y-%m-%d)" --body-file /tmp/pr-body.md
