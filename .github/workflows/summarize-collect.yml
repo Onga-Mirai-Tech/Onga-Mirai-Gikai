@@ -67,21 +67,24 @@ jobs:
           python -m pipeline.summarize.run --collect
           remaining=$(python -m pipeline.summarize.run --count)
           echo "未生成の要約: ${remaining}件"
-          echo "remaining=${remaining}" >> "$GITHUB_OUTPUT"
+          # 先へ進むかどうかは「yes」で渡す。件数（0）で比べると、このステップが
+          # 飛ばされたときの空の出力（null）も 0 とみなされ、準備のできていない状態で
+          # 照合やビルドに進んでしまう（GitHub Actions は型が違うと数に直して比べる）。
+          if [ "$remaining" = "0" ]; then echo "ready=yes" >> "$GITHUB_OUTPUT"; fi
 
       # まだ処理中なら、何もせず次の実行に回す。
       # 失敗したぶんは保存していないので、投げ直しも自動で効く。
       - name: まだ終わっていない
-        if: steps.flight.outputs.go == 'yes' && steps.collect.outputs.remaining != '0'
+        if: steps.flight.outputs.go == 'yes' && steps.collect.outputs.ready != 'yes'
         run: echo "Batch API の処理が続いています。次回の実行で再度確認します。"
 
       - name: 議決結果を照合する
-        if: steps.collect.outputs.remaining == '0'
+        if: steps.collect.outputs.ready == 'yes'
         run: python -m pipeline.verify.results --report "data/verify/結果照合.md"
 
       - name: サイトをビルドする
         id: build
-        if: steps.collect.outputs.remaining == '0'
+        if: steps.collect.outputs.ready == 'yes'
         run: |
           python -m pipeline.build.site | tee /tmp/build.log
           echo "summary=$(grep -E '^会議 ' /tmp/build.log | head -1)" >> "$GITHUB_OUTPUT"
@@ -89,7 +92,7 @@ jobs:
       # エックスサーバーの認証情報が入るまでは自動で飛ばされる。
       # 本番へは出さない。Basic認証付きのプレビュー領域にだけ置く。
       - name: プレビューへ反映する
-        if: steps.collect.outputs.remaining == '0' && env.HAS_XSERVER == 'true'
+        if: steps.collect.outputs.ready == 'yes' && env.HAS_XSERVER == 'true'
         env:
           XSERVER_HOST: ${{ secrets.XSERVER_HOST }}
           XSERVER_USER: ${{ secrets.XSERVER_USER }}
@@ -104,7 +107,7 @@ jobs:
           rm -f ~/xserver_key
 
       - name: データをdataリポジトリへ push
-        if: steps.collect.outputs.remaining == '0'
+        if: steps.collect.outputs.ready == 'yes'
         working-directory: data
         run: |
           rm -f .update-in-flight
@@ -121,7 +124,7 @@ jobs:
       # 公開物は自動で本番に出さない（CLAUDE.md）。
       # 人が確認してマージしたら、deploy.yml が本番へ反映する。
       - name: Pull Request を作る
-        if: steps.collect.outputs.remaining == '0'
+        if: steps.collect.outputs.ready == 'yes'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
