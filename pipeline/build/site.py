@@ -247,6 +247,33 @@ def render_ai_bill(site: Site, bill: dict) -> str:
             + "".join(blocks) + "</div>")
 
 
+def thread_heading(thread: dict, *, with_name: bool = True) -> str:
+    """一般質問の見出し。
+
+    **質問事項が2件以上あるときは、1件目を見出しにしない。**
+    1人が無関係な4テーマを質問することが普通にあり、1件目を見出しにすると
+    そのページ全体がその話題であるかのように読める。
+    """
+    topics = thread.get("topics") or []
+    if len(topics) == 1:
+        return topics[0]["title"]
+    return f'{thread["questioner"]}議員の一般質問' if with_name else "一般質問"
+
+
+def topic_lines(thread: dict) -> str:
+    """質問事項を通告書の番号つきで並べる。一覧のカードの中で使う。
+
+    見出しだけでは何を尋ねたのかが分からないので、一覧の時点で中身を見せる。
+    1件だけのときは見出しがその文言そのものなので、繰り返さない。
+    """
+    topics = thread.get("topics") or []
+    if len(topics) < 2:
+        return ""
+    return '<span class="topics">' + "".join(
+        f'<span><i>{t["no"]}</i>{esc(t["title"])}</span>' for t in topics
+    ) + "</span>"
+
+
 def render_thread(site: Site, thread: dict) -> str:
     tr = site.transcripts[thread["unid"]]
     by_seq = {u.seq: u for u in tr.utterances}
@@ -277,7 +304,7 @@ def render_thread(site: Site, thread: dict) -> str:
         )
 
     meeting = site.meetings[thread["meeting_id"]]
-    title = thread["topics"][0]["title"] if thread["topics"] else f'{thread["questioner"]}議員の一般質問'
+    title = thread_heading(thread)
     body = (
         crumb(depth, (meeting["name"], f'meetings/{thread["meeting_id"]}/'), ("一般質問", ""))
         + f"<h1>{esc(title)}</h1>"
@@ -421,10 +448,10 @@ def render_meeting(site: Site, mid: str, meeting: dict) -> str:
 
     q_cards = "".join(
         f'<a class="card" href="../../questions/{thread_slug(t)}/">'
-        f'<span class="t">{esc(t["topics"][0]["title"] if t["topics"] else t["questioner"] + "議員の一般質問")}</span>'
+        f'<span class="t">{esc(thread_heading(t))}</span>'
         f'<span class="s"><span class="mark">◆</span>{esc(t["questioner"])} 議員 ／ {esc(t["on"])}'
         + (f' ／ 質問事項 {len(t["topics"])}件' if t["topics"] else "")
-        + "</span></a>"
+        + "</span>" + topic_lines(t) + "</a>"
         for t in threads
     )
 
@@ -497,8 +524,9 @@ def render_index(site: Site) -> str:
     recent = sorted(site.threads, key=lambda t: t["on"], reverse=True)[:6]
     q_cards = "".join(
         f'<a class="card" href="questions/{thread_slug(t)}/">'
-        f'<span class="t">{esc(t["topics"][0]["title"] if t["topics"] else t["questioner"] + "議員の一般質問")}</span>'
-        f'<span class="s"><span class="mark">◆</span>{esc(t["questioner"])} 議員 ／ {esc(t["on"])}</span></a>'
+        f'<span class="t">{esc(thread_heading(t))}</span>'
+        f'<span class="s"><span class="mark">◆</span>{esc(t["questioner"])} 議員 ／ {esc(t["on"])}</span>'
+        + topic_lines(t) + "</a>"
         for t in recent
     )
     latest_card = ""
@@ -687,10 +715,10 @@ def render_member(site: Site, m: dict) -> str:
 
     q_cards = "".join(
         f'<a class="card" href="../../questions/{thread_slug(t)}/">'
-        f'<span class="t">{esc(t["topics"][0]["title"] if t["topics"] else "一般質問")}</span>'
+        f'<span class="t">{esc(thread_heading(t, with_name=False))}</span>'
         f'<span class="s">{esc(site.meetings[t["meeting_id"]]["name"])} ／ {esc(t["on"])}'
         + (f' ／ 質問事項 {len(t["topics"])}件' if len(t["topics"]) > 1 else "")
-        + "</span></a>"
+        + "</span>" + topic_lines(t) + "</a>"
         for t in threads
     )
 

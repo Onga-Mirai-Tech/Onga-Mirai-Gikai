@@ -243,3 +243,16 @@ h2::after { content: ""; flex: 1; height: 1px; background: var(--rule-soft); }
   background: var(--sunk); border-radius: 10px; padding: 10px 12px; margin-top: 4px;
 }
 .kv dd .asis b { color: var(--ink); font-family: var(--round); }
+
+/* ---- 一覧のカードに質問事項を並べる ----
+ * 1人が無関係な複数テーマを質問することが普通にある。
+ * 見出しだけでは何を尋ねたのか分からないので、一覧の時点で中身を見せる。
+ */
+.card .topics { display: grid; gap: 4px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--rule-soft); }
+.card .topics span { display: flex; gap: 7px; font-size: 13px; line-height: 1.7; color: var(--ink-soft); }
+.card .topics i {
+  flex: none; font-style: normal; font-family: var(--round); font-size: 11px;
+  color: var(--accent); background: var(--accent-wash);
+  border-radius: 999px; min-width: 18px; height: 18px; margin-top: 3px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
