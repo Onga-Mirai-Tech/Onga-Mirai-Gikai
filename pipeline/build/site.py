@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import argparse
 import collections
+import functools
+import hashlib
 import html
 import json
 import re
@@ -30,6 +32,9 @@ from pathlib import Path
 from pipeline.common.http import decode_cp932
 from pipeline.fetch.voices import unid_to_date
 from pipeline.parse import transcript as T
+
+# スタイルシートの実体。中身の印をURLに付けて、古いCSSが残らないようにする。
+CSS_SOURCE = Path(__file__).resolve().parents[2] / "site" / "assets" / "style.css"
 
 SITE_NAME = "みらい議会"
 SITE_SUB = "遠賀町版"
@@ -127,8 +132,20 @@ class Site:
 
 # ---------------------------------------------------------------- テンプレート
 
+@functools.lru_cache(maxsize=1)
+def css_version(path: str) -> str:
+    """スタイルシートの中身から短い印を作り、URLに付ける。
+
+    静的サイトなので、見た目を直しても**閲覧者のブラウザが古いCSSを持ち続ける**。
+    中身が変わったときだけURLが変わるようにして、確実に読み直させる。
+    中身が同じならURLも同じなので、無駄な再取得は起きない。
+    """
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()[:8]
+
+
 def page(site: Site, *, title: str, body: str, depth: int, description: str = "") -> str:
     root = "../" * depth or "./"
+    v = css_version(str(CSS_SOURCE))
     return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -140,7 +157,7 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
 <meta property="og:description" content="{esc(description)}">
 <meta property="og:site_name" content="{SITE_NAME} -{SITE_SUB}-">
 <meta property="og:type" content="article">
-<link rel="stylesheet" href="{root}assets/style.css">
+<link rel="stylesheet" href="{root}assets/style.css?v={v}">
 </head>
 <body>
 <header class="site-head"><div class="inner">
@@ -204,6 +221,18 @@ def ai_sources(site: Site, huids: list, unid_of) -> str:
     return f'<p class="src"><span class="cap">原文</span>{"".join(out)}</p>' if out else ""
 
 
+def summarized_topics(site: Site, thread: dict) -> set:
+    """AI要約が載っている質問事項の番号。
+
+    要約がない質問事項にリンクを張ると、押しても何も起きないページになる。
+    検証を通らなかった要約は載せていないので、あるものだけを結ぶ。
+    """
+    s = site.summaries.get(thread["id"])
+    if not s:
+        return set()
+    return {t.get("no") for t in s["summary"].get("topics", []) if t.get("points")}
+
+
 def render_ai_thread(site: Site, thread: dict) -> str:
     s = site.summaries.get(thread["id"])
     if not s:
@@ -219,7 +248,9 @@ def render_ai_thread(site: Site, thread: dict) -> str:
             + "</div>"
             for pt in topic.get("points", [])
         )
-        blocks.append(f'<h3>{topic.get("no", "")}. {esc(topic.get("title", ""))}</h3>{points}')
+        blocks.append(
+            f'<h3 id="t{topic.get("no", "")}">{topic.get("no", "")}. '
+            f'{esc(topic.get("title", ""))}</h3>{points}')
     if not blocks:
         return ""
     return (f'<h2>AI要約</h2><div class="ai"><p class="tag">{AI_NOTE}</p>'
@@ -281,11 +312,17 @@ def render_thread(site: Site, thread: dict) -> str:
 
     topics = ""
     if thread["topics"]:
-        items = "".join(f"<p>{t['no']}. {esc(t['title'])}</p>" for t in thread["topics"])
-        topics = (
-            '<h2>通告された質問事項</h2>'
-            f'<div class="origin"><span class="tag">一般質問通告書より</span>{items}</div>'
+        # 要約のある質問事項は、その箇所へ飛べるようにする。
+        # 4テーマの往復が1ページに並ぶので、読みたいところまで遠い。
+        linked = summarized_topics(site, thread)
+        items = "".join(
+            (f'<p><a href="#t{t["no"]}">{t["no"]}. {esc(t["title"])}</a></p>'
+             if t["no"] in linked else f'<p>{t["no"]}. {esc(t["title"])}</p>')
+            for t in thread["topics"]
         )
+        note = ('<span class="tag">一般質問通告書より　／　項目を押すと要約の該当箇所に移動します</span>'
+                if linked else '<span class="tag">一般質問通告書より</span>')
+        topics = f'<h2>通告された質問事項</h2><div class="origin">{note}{items}</div>'
 
     turns = []
     for t in thread["turns"]:

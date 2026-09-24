@@ -256,3 +256,8 @@ h2::after { content: ""; flex: 1; height: 1px; background: var(--rule-soft); }
   border-radius: 999px; min-width: 18px; height: 18px; margin-top: 3px;
   display: inline-flex; align-items: center; justify-content: center;
 }
+
+/* 通告された質問事項から要約へ飛ぶ。固定ヘッダの下に隠れないよう余白をとる。 */
+.ai h3 { scroll-margin-top: 64px; }
+.origin p a { color: var(--accent); text-decoration: none; }
+.origin p a:hover { text-decoration: underline; }
