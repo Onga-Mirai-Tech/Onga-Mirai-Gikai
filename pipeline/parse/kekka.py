@@ -115,8 +115,14 @@ _TOKEN_RE = re.compile(rb"/(F\d+)[^\n]*?Tf|\[(.*?)\]\s*TJ|\((?:\\.|[^()\\])*\)\s
 _PART_RE = re.compile(rb"\(((?:\\.|[^()\\])*)\)|<([0-9A-Fa-f]+)>", re.S)
 
 
-def extract_text(path: Path) -> str:
-    """PDFから文字を取り出す。フォントごとの変換表で引き直す。"""
+def extract_pages(path: Path) -> list[str]:
+    """PDFから**ページごとに**文字を取り出す。フォントごとの変換表で引き直す。
+
+    ページ単位にするのは、**1つのPDFに別の会議が綴じ込まれていることがある**ため。
+    実測: `2914_第1回2月臨時会.pdf` は1ページ目が令和3年第1回臨時会、
+    2ページ目が平成29年第2回臨時会。先頭の表題だけで全ページを判定すると、
+    4年前の議案が令和3年の会議のものとして混ざる。
+    """
     reader = pypdf.PdfReader(str(path))
     lines: list[str] = []
 
@@ -148,7 +154,12 @@ def extract_text(path: Path) -> str:
 
         lines.append("".join(buf))
 
-    return "\n".join(lines)
+    return lines
+
+
+def extract_text(path: Path) -> str:
+    """全ページをつないだ文字列。ページの境目は改行で表す。"""
+    return "\n".join(extract_pages(path))
 
 
 # 表の「議決年月日」欄。和暦の年だけを数字で書く（「7.3.21」＝令和7年3月21日）。
@@ -185,8 +196,12 @@ def era_base(text: str) -> int | None:
 
     議決年月日の欄には元号が書かれていない（「7.3.21」だけ）。
     年だけを見ても令和7年か平成7年か決められないので、表題から取る。
+
+    **会議名の形（「〇〇N年第M回…定例会」）でだけ探す。** 元号を含む語を
+    手当たり次第に拾うと、議案名の「平成30年度…決算」を会議の元号と読み違える。
+    表題のないページ（表の続き）では None を返し、呼び出し側が前のページから引き継ぐ。
     """
-    m = _ERA_RE.search(_squeeze(text))
+    m = _MEETING_RE.search(_squeeze(text))
     return _ERA_BASE[m.group(1)] if m else None
 
 
@@ -207,7 +222,7 @@ def _find_result(text: str) -> tuple[str, str] | None:
     return None
 
 
-def parse(text: str) -> list[Item]:
+def parse(text: str, base: int | None = None) -> list[Item]:
     """抽出した文字列から議案の行を拾う。
 
     PDFは「議案番号／件名／議決結果」の表で、番号と件名・結果が
@@ -218,7 +233,7 @@ def parse(text: str) -> list[Item]:
     # 番号の前で必ず改行する。表の折り返しで番号が行頭に来ないことがあるため。
     flat = re.sub(r"(?=(議案|発議|発委|報告|請願|陳情|意見書案|諮問|承認)第\d{1,3}号)", "\n", flat)
 
-    base = era_base(text)
+    base = base if base is not None else era_base(text)
     items: list[Item] = []
     for chunk in flat.split("\n"):
         chunk = chunk.strip()

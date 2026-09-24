@@ -47,18 +47,30 @@ def load_pdfs(root: Path, first_year: str = FIRST_YEAR) -> tuple[dict[str, dict[
     unreadable: list[str] = []
     for f in sorted((root / "data" / "raw" / "kekka").glob("*.pdf")):
         try:
-            text = K.extract_text(f)
+            pages = K.extract_pages(f)
         except Exception as e:  # PDFの作りが違うものがある。止めずに記録して進む。
             unreadable.append(f"{f.name}: {type(e).__name__}")
             continue
-        mid = K.meeting_id(text)
-        if not mid:
+
+        # **ページごとに会議を判定する。** 1つのPDFに別の会議が綴じ込まれて
+        # いることがある（実測: 平成29年の臨時会が令和3年のPDFに入っていた）。
+        # 表のないページ（続き）は、直前のページの会議に属する。
+        mid, base = "", None
+        seen = False
+        for page in pages:
+            found = K.meeting_id(page)
+            if found:
+                mid, base = found, K.era_base(page)
+            if not mid:
+                continue
+            seen = True
+            if mid[:4] < first_year:
+                continue
+            # 表題のないページ（表の続き）には元号がない。前のページから引き継ぐ。
+            for item in K.parse(page, base):
+                out[mid].setdefault(item.number, item)
+        if not seen:
             unreadable.append(f"{f.name}: 会議名が読めない")
-            continue
-        if mid[:4] < first_year:
-            continue
-        for item in K.parse(text):
-            out[mid].setdefault(item.number, item)
     return dict(out), unreadable
 
 

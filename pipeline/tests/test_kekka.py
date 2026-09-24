@@ -43,6 +43,25 @@ class TestMeetingId(unittest.TestCase):
         self.assertEqual(K.meeting_id("審議案件・結果"), "")
 
 
+class TestEraBase(unittest.TestCase):
+    def test_reads_the_era_from_the_meeting_name(self):
+        self.assertEqual(K.era_base("令和元年 第５回遠賀町議会 ９月定例会"), 2018)
+
+    def test_is_not_fooled_by_a_bill_title(self):
+        # 議案名の「平成30年度…決算」を会議の元号と読むと、議決年月日が30年ずれる
+        text = "令和元年 第５回遠賀町議会 ９月定例会 議案第50号 平成30年度遠賀町一般会計歳入歳出決算"
+        self.assertEqual(K.era_base(text), 2018)
+
+    def test_a_continuation_page_has_no_era(self):
+        # 表の続きのページには表題がない。呼び出し側が前のページから引き継ぐ。
+        self.assertIsNone(K.era_base("議案第55号 平成30年度遠賀町地域下水道事業特別会計"))
+
+    def test_the_caller_can_supply_the_era(self):
+        got = K.parse("議案第55号平成30年度下水道決算の認定について1.9.20認定", base=2018)
+        self.assertEqual([(i.number, i.decided_on, i.result) for i in got],
+                         [("議案第55号", "2019-09-20", "認定")])
+
+
 class TestDate(unittest.TestCase):
     def test_splits_the_date_from_the_title(self):
         # 議決年月日の欄は元号を書かない（「7.3.21」）。元号は表題から取る。
