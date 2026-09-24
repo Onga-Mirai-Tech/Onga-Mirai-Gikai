@@ -116,6 +116,10 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="議決結果を町公式HPのPDFと突き合わせる")
     ap.add_argument("--report", type=Path, help="結果をMarkdownで書き出す")
     ap.add_argument("--from-year", default=FIRST_YEAR)
+    ap.add_argument(
+        "--emit", type=Path, default=Path("data/verify/kekka.json"),
+        help="PDF側の議決結果を書き出す。サイトが原典の併記に使う",
+    )
     args = ap.parse_args(argv)
 
     root = Path(__file__).resolve().parents[2]
@@ -143,6 +147,19 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {m.meeting_id} {m.number} [{m.kind}] 会議録={m.from_minutes} / PDF={m.from_pdf}")
     if len(bad) > 40:
         print(f"  …ほか {len(bad) - 40}件")
+
+    if args.emit:
+        # サイトが「二つの原典の表記を併記する」ために使う。
+        # どちらかを正としないので、PDF側の値もそのまま持っておく。
+        args.emit.parent.mkdir(parents=True, exist_ok=True)
+        emit = {
+            f"{mid}-b{number}": {"result": item.result, "decided_on": item.decided_on}
+            for mid, items in pdfs.items()
+            for number, item in items.items()
+        }
+        args.emit.write_text(
+            json.dumps(emit, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+        print(f"  {args.emit} に {len(emit)}件を書きました。")
 
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)

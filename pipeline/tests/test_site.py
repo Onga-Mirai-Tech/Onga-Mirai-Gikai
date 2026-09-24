@@ -36,7 +36,7 @@ class TestMemberSlug(unittest.TestCase):
     def site(self, slugs):
         return S.Site(out=None, transcripts={}, fino={}, threads=[], bills=[],
                       speakers={}, meetings={}, slugs=slugs, member_bills={},
-                      current_members=set(), summaries={})
+                      current_members=set(), summaries={}, kekka={})
 
     def test_uses_romaji_when_given(self):
         # 氏名の読みはこちらでは決められないので、人が masters/speakers.json に入れる
@@ -69,7 +69,7 @@ class TestMembersInScope(unittest.TestCase):
                                     "first": "2020-01-01", "last": "2026-06-09"},
                       },
                       meetings={}, slugs={}, member_bills={}, current_members=set(),
-                      summaries={})
+                      summaries={}, kekka={})
         self.assertEqual([m["name"] for m in S.members_in_scope(site)], ["古野修"])
 
 

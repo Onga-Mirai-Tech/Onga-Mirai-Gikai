@@ -114,6 +114,8 @@ class Site:
     current_members: set[str]
     # 議案ID・一般質問ID → AI要約。検証を通ったものだけ入れる
     summaries: dict[str, dict]
+    # 議案ID → 町HP「審議案件・結果」PDFの議決結果。表記が違うときに併記する
+    kekka: dict[str, dict]
 
     def voices_url(self, unid: str, huid: int | None = None) -> str:
         f = self.fino.get(unid)
@@ -293,15 +295,50 @@ def render_thread(site: Site, thread: dict) -> str:
     return page(site, title=title, body=body, depth=depth, description=desc)
 
 
+# 二つの公式資料で表記が違うときの断り。どちらかを正とは書かない。
+ASIS_NOTE = (
+    "遠賀町議会の会議録と、遠賀町ホームページの「審議案件・結果」とで表記が異なります。"
+    "どちらが正しいかをこのサイトでは判断せず、<b>両方を原典のまま</b>載せています。"
+)
+
+MINUTES_LABEL = "会議録"
+KEKKA_LABEL = "審議案件・結果"
+
+
+def dual(minutes: str, pdf: str) -> tuple[str, bool]:
+    """会議録の値とPDFの値を並べる。同じなら1つだけ返す。
+
+    **どちらかに揃えない。** 「可決」と「認定」を同じ意味とみなして書き換えるのは
+    こちらの判断が入る行為で、中立性の方針に反する（CLAUDE.md）。
+    出どころを添えて両方そのまま出し、読む人が原典にあたれるようにする。
+    """
+    if not pdf or pdf == minutes:
+        return esc(minutes), False
+    pair = "".join(
+        f'<span class="pair"><b>{esc(v)}</b><small>{esc(label)}</small></span>'
+        for v, label in ((minutes, MINUTES_LABEL), (pdf, KEKKA_LABEL))
+        if v
+    )
+    return pair, True
+
+
 def render_bill(site: Site, bill: dict) -> str:
     depth = 2
     meeting = site.meetings.get(bill["meeting_id"], {"name": bill["meeting"]})
+    k = site.kekka.get(bill["id"], {})
 
-    rows = [("提出された日", bill["submitted_on"])]
-    if bill["decided_on"]:
-        rows.append(("議決年月日", bill["decided_on"]))
-    rows.append(("議決結果", bill["result"] or "（会議録から判定できませんでした）"))
-    kv = "".join(f"<dt>{esc(k)}</dt><dd>{esc(str(v))}</dd>" for k, v in rows)
+    rows = [("提出された日", esc(bill["submitted_on"]))]
+    differs = False
+    if bill["decided_on"] or k.get("decided_on"):
+        html, d = dual(bill["decided_on"] or "", k.get("decided_on") or "")
+        rows.append(("議決年月日", html))
+        differs = differs or d
+    result_html, d = dual(bill["result"] or "", k.get("result") or "")
+    differs = differs or d
+    rows.append(("議決結果", result_html or "（会議録から判定できませんでした）"))
+    kv = "".join(f"<dt>{esc(key)}</dt><dd>{val}</dd>" for key, val in rows)
+    if differs:
+        kv += f'<dt></dt><dd><span class="asis">{ASIS_NOTE}</span></dd>'
 
     vote = ""
     if bill["vote"]:
@@ -725,6 +762,14 @@ def load_summaries(root: Path) -> tuple[dict[str, dict], int]:
     return out, held
 
 
+def load_kekka(root: Path) -> dict[str, dict]:
+    """町HP「審議案件・結果」から読んだ議決結果（`pipeline.verify.results --emit`）。"""
+    path = root / "data" / "verify" / "kekka.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def load_fino(root: Path) -> dict[str, int]:
     """state.json から UNID → FINO を作る。原文リンクの組み立てに使う。"""
     state_path = root / "state.json"
@@ -813,13 +858,14 @@ def build(root: Path, out: Path, since: date, limit_meetings: int | None) -> Sit
 
     overrides = json.loads((root / "masters" / "speakers.json").read_text(encoding="utf-8")) \
         if (root / "masters" / "speakers.json").exists() else {}
+    kekka = load_kekka(root)
     summaries, held = load_summaries(root)
     print(f"  AI要約 {len(summaries)}件を読みました"
           + (f"（検証が通らず保留 {held}件）" if held else ""))
     return Site(out=out, transcripts=transcripts, fino=fino, threads=threads,
                 bills=bills, speakers=speakers, meetings=meetings,
                 slugs=overrides.get("slugs", {}), member_bills=dict(member_bills),
-                current_members=current_members, summaries=summaries)
+                current_members=current_members, summaries=summaries, kekka=kekka)
 
 
 def main(argv: list[str] | None = None) -> int:
