@@ -1,4 +1,4 @@
-/* みらい議会 -遠賀町版-
+/* みらい議会＠遠賀町
  *
  * 外部からは何も読み込まない。フォントは端末が持っているものだけを使う。
  * 配色は遠賀町公式ホームページに合わせた青系（docs/設計ドラフト.md「デザイン方針」）。
@@ -261,3 +261,6 @@ h2::after { content: ""; flex: 1; height: 1px; background: var(--rule-soft); }
 .ai h3 { scroll-margin-top: 64px; }
 .origin p a { color: var(--accent); text-decoration: none; }
 .origin p a:hover { text-decoration: underline; }
+
+/* 政党との関係の断り。町・議会の断りと同じ強さで、すぐ下に並べる。 */
+.site-foot .notice.party { margin-top: 14px; }

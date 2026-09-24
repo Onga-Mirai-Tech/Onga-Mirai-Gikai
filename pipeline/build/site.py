@@ -36,8 +36,10 @@ from pipeline.parse import transcript as T
 # スタイルシートの実体。中身の印をURLに付けて、古いCSSが残らないようにする。
 CSS_SOURCE = Path(__file__).resolve().parents[2] / "site" / "assets" / "style.css"
 
-SITE_NAME = "みらい議会"
-SITE_SUB = "遠賀町版"
+# 本家「みらい議会」のFork ガイドラインに合わせ「みらい議会＠地域名」の形にする（2026-09-24）。
+# https://github.com/team-mirai/mirai-gikai/blob/develop/FORK_GUIDELINES.md
+# コードは流用していないので fork ではないが、名称を借りている以上この形に従う。
+SITE_NAME = "みらい議会＠遠賀町"
 # 公開は令和元年〜を先行する（docs/設計ドラフト.md「2. 決定事項」）
 DEFAULT_FROM = date(2019, 5, 1)
 
@@ -65,6 +67,16 @@ FOOTER_BODY = (
     "正確な内容は必ず原典（遠賀町議会 会議録検索システム）をご確認ください。"
 )
 FOOTER_OSS = "なお、本WEBサイトはチームみらいが公開しているOSSを参考に作成されています。"
+
+# 政党との関係の断り。見出しは本家のFork ガイドラインが指定する文言そのまま。
+# 「政治思想が異なる」とは書かない。別の思想があると書けば、それも一つの立場になる。
+# このサイトの立場は「どの政党の側にも立たない」ことなので、関係がないことと、
+# 支持も宣伝もしないことを書く（2026-09-24）。
+FOOTER_PARTY_HEAD = "これは政党チームみらいが運営しているものではありません"
+FOOTER_PARTY_BODY = (
+    "特定の政党・政治団体の立場に立つものではなく、"
+    "チームみらいを含むいずれの政党の主張や政策を支持・宣伝するものでもありません。"
+)
 
 _BILL_NO_RE = re.compile(r"^(.+?)第(\d+)号$")
 _KIND_SLUG = {
@@ -151,17 +163,17 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{esc(title)}｜{SITE_NAME} -{SITE_SUB}-</title>
+<title>{esc(title)}｜{SITE_NAME}</title>
 <meta name="description" content="{esc(description)}">
 <meta property="og:title" content="{esc(title)}">
 <meta property="og:description" content="{esc(description)}">
-<meta property="og:site_name" content="{SITE_NAME} -{SITE_SUB}-">
+<meta property="og:site_name" content="{SITE_NAME}">
 <meta property="og:type" content="article">
 <link rel="stylesheet" href="{root}assets/style.css?v={v}">
 </head>
 <body>
 <header class="site-head"><div class="inner">
-  <a class="logo" href="{root}">{LOGO_SVG}<span><span class="n">{SITE_NAME}</span><span class="s">{SITE_SUB}</span></span></a>
+  <a class="logo" href="{root}">{LOGO_SVG}<span><span class="n">{SITE_NAME}</span></span></a>
   <span class="badge-unofficial">非公式</span>
 </div></header>
 <main>
@@ -169,6 +181,7 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
 </main>
 <footer class="site-foot"><div class="inner">
   <p class="notice"><b>{FOOTER_HEAD}</b>{FOOTER_BODY}</p>
+  <p class="notice party"><b>{FOOTER_PARTY_HEAD}</b>{FOOTER_PARTY_BODY}</p>
   <nav class="foot-nav" aria-label="サイト内の案内">
     <a href="{root}">トップ</a>
     <a href="{root}meetings/">会議一覧</a>
@@ -615,9 +628,17 @@ def render_about(site: Site) -> str:
         + "<h1>このサイトについて</h1>"
         + '<p class="lead">遠賀町議会の会議録をもとに、議事の流れと「誰が何を言い、町がどう答えたか」を'
         "わかりやすく見せる、<b>個人が運営する非公式サイト</b>です。</p>"
-        "<h2>立場</h2><div class=\"referral\">"
-        "遠賀町・遠賀町議会が公式に提供しているWEBサイトではありません。"
-        "運営しているのは個人で、遠賀町・遠賀町議会とは関係がありません。</div>"
+        "<h2>立場</h2><div class=\"stack\">"
+        '<div class="card"><span class="t">町・議会の公式サイトではありません</span>'
+        '<span class="s">遠賀町・遠賀町議会が公式に提供しているWEBサイトではありません。'
+        "運営しているのは個人で、遠賀町・遠賀町議会とは関係がありません。</span></div>"
+        f'<div class="card"><span class="t">{FOOTER_PARTY_HEAD}</span>'
+        '<span class="s">「みらい議会」という名前は、チームみらいが公開しているソフトウェアの名称を、'
+        "同団体の定める形式（みらい議会＠地域名）に従って借りているものです。"
+        "見た目と言葉づかいは参考にしていますが、プログラムは独自に作成しており、運営にも内容にも同団体は関わっていません。"
+        "このサイトは特定の政党・政治団体の立場に立つものではなく、チームみらいを含む"
+        "いずれの政党の主張や政策を支持・宣伝するものでもありません。</span></div>"
+        "</div>"
         "<h2>守っていること</h2><div class=\"stack\">"
         '<div class="card"><span class="t">評価や順位づけをしません</span>'
         '<span class="s">議員・会派・町に対する評価、点数付け、ランキング、賛否の色分けはしません。'
