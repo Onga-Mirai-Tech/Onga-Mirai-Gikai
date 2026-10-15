@@ -95,6 +95,7 @@ python -m unittest discover -s pipeline/tests -t .
 | `summarize-collect.yml` | 3時間おき | 要約が揃っていれば照合 → ビルド → プレビュー反映 → **Pull Request を作る** |
 | `deploy.yml` | main への push | 本番へ反映 |
 | `test.yml` | push・PR | テスト |
+| `check-api-key.yml` | 手動 | `ANTHROPIC_API_KEY` で API につながるかを確かめる（キーを差し替えたとき） |
 
 投入と回収を分けているのは、Batch API の完了までが数分から十数時間と読めず、1ジョブ6時間の上限に収まる保証がないためです。**本番へは自動で出しません。** 月次更新は Pull Request として届き、人が確認してマージしたときだけ反映されます。
 

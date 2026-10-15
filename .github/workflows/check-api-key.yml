@@ -1,0 +1,34 @@
+name: check-api-key
+
+# Secrets の ANTHROPIC_API_KEY で Claude API につながるかを確かめる。
+# キーを差し替えたときに手動で動かす。
+#
+# 料金のかからないモデル一覧の取得だけを行う。キーの値は表示しない。
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: モデル一覧を取得して、認証が通るかを見る
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "ANTHROPIC_API_KEY が登録されていません"
+            exit 1
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://api.anthropic.com/v1/models \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01")
+          echo "HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "認証が通りませんでした（401 ならキーの誤り・失効、403 なら権限）"
+            exit 1
+          fi
+          echo "認証が通りました"
