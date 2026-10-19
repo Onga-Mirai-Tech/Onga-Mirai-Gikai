@@ -55,6 +55,9 @@ VOICES_BODY = (
     "?ACT=203&FINO={fino}&HATSUGENMODE=1&HYOUJIMODE=0&STYLE=0"
 )
 
+# 本番のURL。SNSで共有したときの画像は絶対URLでないと読まれない。
+SITE_URL = "https://miraigikai.onga-mirai-tech.com"
+
 # ロゴ（C案「川と芽」）。外部読み込みをしないのでSVGを直接埋める。
 LOGO_SVG = (
     '<svg width="30" height="30" viewBox="0 0 40 40" aria-hidden="true">'
@@ -182,6 +185,13 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
 <meta property="og:description" content="{esc(description)}">
 <meta property="og:site_name" content="{SITE_NAME}">
 <meta property="og:type" content="article">
+<meta property="og:image" content="{SITE_URL}/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{SITE_NAME}。遠賀町・遠賀町議会、政党チームみらいとは関係のない、個人運営の非公式サイトです。">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="{root}assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{root}assets/apple-touch-icon.png">
 <link rel="stylesheet" href="{root}assets/style.css?v={v}">
 </head>
 <body>

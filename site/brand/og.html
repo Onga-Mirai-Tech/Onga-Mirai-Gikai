@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<!-- SNSで共有したときの画像（og.png、1200×630）の元。make.sh で画像にする。
+     共有された画像だけを見た人にも、非公式であり町・議会・政党と関係がないことが伝わるようにする。 -->
+<html lang="ja"><head><meta charset="utf-8"><style>
+html,body{margin:0;width:1200px;height:630px;overflow:hidden}
+body{
+  background:#F3F8FC;color:#22303F;
+  font-family:"Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:72px 88px 56px;box-sizing:border-box;
+  background-image:linear-gradient(180deg,#F3F8FC 0%,#E4EFF9 100%);
+}
+.brand{display:flex;align-items:center;gap:28px}
+.brand svg{width:128px;height:128px;color:#1F5FA8;flex:none}
+.name{font-size:76px;font-weight:600;letter-spacing:.03em;line-height:1.2}
+.lead{font-size:40px;color:#48596B;line-height:1.6;margin:0}
+.lead b{color:#16447A;font-weight:600}
+.foot{display:flex;gap:16px;align-items:center;font-size:22.5px;white-space:nowrap;color:#48596B;
+  border-top:2px solid #D7E5EF;padding-top:26px}
+.badge{background:#1F5FA8;color:#fff;border-radius:999px;padding:6px 20px;font-size:24px;white-space:nowrap}
+</style></head><body>
+<div class="brand">
+  <svg viewBox="0 0 40 40" aria-hidden="true">
+    <path d="M4 30 C 12 30, 14 24, 22 24 S 32 27, 36 25" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".4"/>
+    <path d="M4 35 C 12 35, 14 29, 22 29 S 32 32, 36 30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".25"/>
+    <path d="M20 22 V 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M20 15 C 20 10, 24 7, 28 7 C 28 12, 24 15, 20 15 Z" fill="currentColor"/>
+    <path d="M20 19 C 20 15.5, 17 13.5, 14 13.5 C 14 17, 17 19, 20 19 Z" fill="currentColor" opacity=".55"/>
+  </svg>
+  <div class="name">みらい議会＠遠賀町</div>
+</div>
+<p class="lead">遠賀町議会の会議録から、<br><b>誰が何を質問し、町がどう答えたか</b>を読みやすく。</p>
+<div class="foot"><span class="badge">非公式</span>個人運営のサイトです。遠賀町・遠賀町議会、政党チームみらいとは関係ありません。</div>
+</body></html>

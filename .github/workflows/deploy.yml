@@ -55,7 +55,10 @@ jobs:
         run: |
           install -m 600 /dev/stdin ~/xserver_key <<< "$XSERVER_SSH_KEY"
           # .htaccess はサーバー側の設定（常時SSL化など）。ビルド結果で消さない。
+          # .user.ini はエックスサーバーが置くPHPの設定。preview/ は確認用サイトで、
+          # summarize-collect.yml が別に反映する。どちらも --delete で消さないよう除く。
           rsync -az --delete --exclude=.htaccess --exclude=.htpasswd \
+            --exclude=.user.ini --exclude=/preview/ \
             -e "ssh -i ~/xserver_key -p 10022 -o StrictHostKeyChecking=accept-new" \
             dist/ "$XSERVER_USER@$XSERVER_HOST:$XSERVER_PUBLIC_DIR/"
           rm -f ~/xserver_key
