@@ -85,6 +85,12 @@ FOOTER_PARTY_BODY = (
     "チームみらいを含むいずれの政党の主張や政策を支持・宣伝するものでもありません。"
 )
 
+# 全ページの先頭に出す断り。フッターの断りは最後まで読まないと目に入らないため、
+# 町・議会・政党チームみらいと関係がないことを最初に示す（2026-10-19、町からの依頼）。
+# ヘッダーと違って画面に固定はしない。スマホでは本文の場所を取りすぎる。
+TOP_NOTICE_HEAD = "遠賀町・遠賀町議会、政党チームみらいとは関係のない、個人運営の非公式サイトです。"
+TOP_NOTICE_BODY = "AI要約を含みます。正確な内容は必ず原典（会議録）をご確認ください。"
+
 _BILL_NO_RE = re.compile(r"^(.+?)第(\d+)号$")
 _KIND_SLUG = {
     "議案": "b", "発議": "h", "発委": "hi", "報告": "r", "意見書案": "i",
@@ -183,12 +189,16 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
   <a class="logo" href="{root}">{LOGO_SVG}<span><span class="n">{SITE_NAME}</span></span></a>
   <span class="badge-unofficial">非公式</span>
 </div></header>
+<div class="top-notice" role="note"><div class="inner">
+  <b>{TOP_NOTICE_HEAD}</b>{TOP_NOTICE_BODY}<a href="{root}about/">このサイトについて</a>
+</div></div>
 <main>
 {body}
 </main>
 <footer class="site-foot"><div class="inner">
   <p class="notice"><b>{FOOTER_HEAD}</b>{FOOTER_BODY}</p>
   <p class="notice party"><b>{FOOTER_PARTY_HEAD}</b>{FOOTER_PARTY_BODY}</p>
+  <p class="foot-contact"><b>誤りのご指摘・修正のご依頼</b>{contact_links()}</p>
   <nav class="foot-nav" aria-label="サイト内の案内">
     <a href="{root}">トップ</a>
     <a href="{root}meetings/">会議一覧</a>
@@ -462,7 +472,17 @@ def render_bill(site: Site, bill: dict) -> str:
     else:
         ref = ""
 
+    # 質疑に入る前の発言（町長の提案理由の説明、委員長報告、監査委員の報告など）は
+    # 質疑・討論ではない。同じ日のうちで「質疑」「討論」の進行より前にあるものを分ける
+    # （2026-10-19、町からの指摘）。
+    opened = {}
+    for s in bill["stages"]:
+        if s["kind"] in ("質疑", "討論"):
+            opened[s["unid"]] = min(opened.get(s["unid"], s["seq"]), s["seq"])
+
     talk = []
+    explain = []
+    explainers = set()
     for u_ref in bill["utterances"]:
         tr = site.transcripts.get(u_ref["unid"])
         if tr is None:
@@ -474,11 +494,23 @@ def render_bill(site: Site, bill: dict) -> str:
         mark = "◆" if u.kind == "質問者" else "◎"
         link = site.voices_url(u_ref["unid"], u.huid)
         anchor = f' <a href="{link}" title="原文（会議録）で読む">原文</a>' if link else ""
-        talk.append(
+        turn = (
             f'<div class="turn {side}"><div class="who"><span class="mark">{mark}</span>'
             f'{esc(u.title)}（{esc(u.name)}）{anchor}</div>'
             f'<div class="bubble">{paragraphs(u.text)}</div></div>'
         )
+        if u_ref["seq"] < opened.get(u_ref["unid"], float("inf")):
+            explain.append(turn)
+            explainers.add(u.title)
+        else:
+            talk.append(turn)
+
+    proposal = ""
+    if explain:
+        # 町長だけなら会議録の言い方どおり「提案理由の説明」。
+        # 委員長報告や監査委員の報告が入るときは「・報告」を添える。
+        head = "提案理由の説明" if explainers <= {"町長"} else "提案理由の説明・報告"
+        proposal = f'<h2>{head}</h2><div class="turns">{"".join(explain)}</div>'
 
     if talk:
         discussion = f'<h2>質疑・討論</h2><div class="turns">{"".join(talk)}</div>'
@@ -492,6 +524,7 @@ def render_bill(site: Site, bill: dict) -> str:
         + f"<dl class=\"kv\">{kv}</dl>"
         + vote
         + render_ai_bill(site, bill)
+        + proposal
         + discussion
         + (f"<h2>委員会付託</h2>{ref}" if ref else "")
     )
@@ -642,17 +675,35 @@ def ai_prompt_version(site: Site) -> str:
 
 OPERATOR = "Onga-Mirai-Tech（個人運営）"
 CONTACT = "info@onga-mirai-tech.com"
+# 公開する連絡先。第三者からの修正依頼を受けられるように（2026-10-19、町からの依頼）。
+# 空のものは表示しない。
+CONTACT_X = "https://x.com/OngaMiraiTech"
+CONTACT_INSTAGRAM = "https://www.instagram.com/onga_no_mirai"
 # 施行日。変えたら「改訂」として日付を足す。
 POLICY_ENACTED = "2026年9月24日"
 
 
+def contact_channels() -> list[tuple[str, str, str]]:
+    """（種類, 表示, URL）。メールを先頭にする。"""
+    out = [("メール", CONTACT, f"mailto:{CONTACT}")]
+    if CONTACT_X:
+        out.append(("X", "@" + CONTACT_X.rstrip("/").rsplit("/", 1)[-1], CONTACT_X))
+    if CONTACT_INSTAGRAM:
+        out.append(("Instagram", "@" + CONTACT_INSTAGRAM.rstrip("/").rsplit("/", 1)[-1],
+                    CONTACT_INSTAGRAM))
+    return out
+
+
+def contact_links() -> str:
+    """フッター用の1行。"""
+    return "".join(f'<span>{kind}：<a href="{url}">{esc(label)}</a></span>'
+                   for kind, label, url in contact_channels())
+
+
 def contact_block() -> str:
-    return (
-        '<div class="referral">'
-        f"<b>{esc(OPERATOR)}</b><br>"
-        f'メール：<a href="mailto:{CONTACT}">{CONTACT}</a>'
-        "</div>"
-    )
+    lines = "<br>".join(f'{kind}：<a href="{url}">{esc(label)}</a>'
+                        for kind, label, url in contact_channels())
+    return f'<div class="referral"><b>{esc(OPERATOR)}</b><br>{lines}</div>'
 
 
 def legal_page(site: Site, *, title: str, lead: str, sections: list[tuple[str, str]],
@@ -679,6 +730,7 @@ def render_privacy(site: Site) -> str:
     サーバーに送らない。
     集まるのはサーバー会社が自動で取るアクセスログ（AWStatsで集計）と、
     問い合わせのメールだけ。サイトに機能を足したら、ここも見直すこと。
+    2026-10-19: 連絡先にSNS（X・Instagram）を足したので、そのメッセージも含めた。
     """
     sections = [
         ("1. 本サイトが集める情報",
@@ -694,7 +746,9 @@ def render_privacy(site: Site) -> str:
          "<li><b>アクセスログ</b>　本サイトを置いているレンタルサーバー（エックスサーバー株式会社）が、閲覧のたびに自動で記録します。"
          "IPアドレス、閲覧した日時とページ、ブラウザの種類、参照元のページなどです。"
          "サーバーの機能による閲覧数の集計にも使われます。</li>"
-         "<li><b>お問い合わせの内容</b>　メールでお問い合わせいただいた場合の、メールアドレス、お名前（書かれていれば）、お問い合わせの内容。</li>"
+         "<li><b>お問い合わせの内容</b>　メールまたはSNS（X・Instagram）のメッセージでお問い合わせいただいた場合の、"
+         "メールアドレスまたはアカウント名、お名前（書かれていれば）、お問い合わせの内容。"
+         "SNSのメッセージは、各サービスの利用規約・プライバシーポリシーのもとでやり取りされます。</li>"
          "</ol>"),
         ("2. 使いみち",
          "<ul>"
@@ -717,7 +771,7 @@ def render_privacy(site: Site) -> str:
          "<p>それ以外の方で、会議録に記載されたご自身の氏名などの掲載について訂正や削除を希望される場合は、"
          "下記のお問い合わせ先までご連絡ください。内容を確認のうえ、個別に対応します。</p>"),
         ("6. 管理と保管",
-         "<p>お問い合わせのメールは、運営者だけが閲覧できる環境で管理し、"
+         "<p>お問い合わせのメールとメッセージは、運営者だけが閲覧できる環境で管理し、"
          "対応に必要な期間を過ぎたものから削除します。</p>"),
         ("7. 改訂",
          "<p>内容を変更する場合は、このページに改訂日とともに掲載します。</p>"),

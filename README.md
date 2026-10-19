@@ -135,7 +135,7 @@ python -m unittest discover -s pipeline/tests -t .
 
 ## 誤りの指摘・連絡
 
-サイトの内容の誤り（読み取りの誤り、要約の誤りなど）は、[Issues](https://github.com/Onga-Mirai-Tech/Onga-Mirai-Gikai/issues) か info@onga-mirai-tech.com までお知らせください。
+サイトの内容の誤り（読み取りの誤り、要約の誤りなど）は、[Issues](https://github.com/Onga-Mirai-Tech/Onga-Mirai-Gikai/issues)、info@onga-mirai-tech.com、または X の [@OngaMiraiTech](https://x.com/OngaMiraiTech) までお知らせください。
 
 ## ライセンス
 
