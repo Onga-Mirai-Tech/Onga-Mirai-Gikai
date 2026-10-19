@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!-- Instagram 投稿用の画像（1080×1350 を4枚）の元。make.sh で画像にする。
+     slides.html#s1 〜 #s4 で1枚ずつ表示する。
+     中立性の方針はサイトと同じ: 議員・会派・町を評価しない。特定の議員を目立たせない
+     （画面の例は、全員の一般質問が同じように並ぶトップと定例会のページにしている）。
+     3枚目の画面は公開中のサイトを iframe で読み込む。作るときはネットにつながっていること。 -->
+<html lang="ja"><head><meta charset="utf-8"><style>
+:root{
+  --paper:#F3F8FC; --surface:#fff; --sunk:#E7F1F8; --ink:#22303F; --ink-soft:#48596B;
+  --muted:#7C8C9B; --rule:#D7E5EF; --accent:#1F5FA8; --deep:#16447A; --wash:#E4EFF9;
+  --round:"Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif;
+  --sans:"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;
+}
+html,body{margin:0;width:1080px;height:1350px;overflow:hidden}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans)}
+section{display:none;box-sizing:border-box;width:1080px;height:1350px;padding:76px 80px 64px;
+  flex-direction:column;background:linear-gradient(180deg,#F3F8FC 0%,#E4EFF9 100%)}
+section:target{display:flex}
+.logo{color:var(--accent);display:block}
+.brandline{display:flex;align-items:center;gap:18px;font-family:var(--round);font-size:34px;font-weight:600;color:var(--ink)}
+.brandline .logo{width:64px;height:64px}
+h1,h2{font-family:var(--round);font-weight:600;margin:0;letter-spacing:.02em}
+.eyebrow{font-family:var(--round);font-size:30px;color:var(--accent);font-weight:600;margin:0 0 20px;letter-spacing:.08em}
+.foot{margin-top:auto;display:flex;gap:18px;align-items:center;font-size:25px;color:var(--ink-soft);
+  border-top:2px solid var(--rule);padding-top:24px;line-height:1.6}
+.badge{background:var(--accent);color:#fff;border-radius:999px;padding:8px 24px;font-size:26px;
+  font-family:var(--round);white-space:nowrap;flex:none}
+
+/* 1 表紙 */
+#s1 .hero{margin:auto 0;display:flex;flex-direction:column;align-items:flex-start;gap:44px}
+#s1 .hero .logo{width:200px;height:200px}
+#s1 h1{font-size:96px;line-height:1.25}
+#s1 .lead{font-size:46px;line-height:1.65;color:var(--ink-soft);margin:0}
+#s1 .lead b{color:var(--deep);font-weight:600}
+#s1 .new{font-family:var(--round);font-size:36px;font-weight:600;color:#fff;background:var(--deep);
+  border-radius:16px;padding:14px 30px}
+
+/* 2 できること / 4 大切にしていること */
+.list{display:grid;gap:20px;margin-top:40px}
+.item{background:var(--surface);border-radius:26px;padding:26px 36px;box-shadow:0 2px 6px rgba(28,60,96,.07)}
+.item .t{display:block;font-family:var(--round);font-size:38px;font-weight:600;color:var(--ink);line-height:1.45}
+.item .s{display:block;font-size:27px;color:var(--ink-soft);line-height:1.6;margin-top:6px}
+h2{font-size:58px;line-height:1.35}
+
+/* 3 画面 */
+.phones{display:flex;gap:44px;justify-content:center;margin-top:40px}
+.phone{width:400px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.frame{width:400px;height:700px;border-radius:54px;background:#1B2A3A;padding:14px;box-sizing:border-box;
+  box-shadow:0 20px 50px rgba(28,60,96,.22)}
+/* 中身は公開中のサイトをスマホの幅（390px）で開き、枠に合わせて縮める */
+.screen{width:372px;height:672px;border-radius:40px;overflow:hidden;background:#fff}
+.screen iframe{border:0;width:390px;height:705px;transform:scale(.9538);transform-origin:0 0;display:block}
+.phone .cap{font-family:var(--round);font-size:30px;font-weight:600;color:var(--ink);text-align:center;line-height:1.5}
+.phone .cap small{display:block;font-family:var(--sans);font-weight:400;font-size:24px;color:var(--ink-soft)}
+
+/* 4 しめ */
+.link{margin-top:24px;background:var(--deep);color:#fff;border-radius:26px;padding:26px 36px}
+.link .t{font-family:var(--round);font-size:36px;font-weight:600;display:block}
+.link .u{font-size:29px;opacity:.92;display:block;margin-top:8px;letter-spacing:.01em}
+</style></head><body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mark" viewBox="0 0 40 40">
+    <path d="M4 30 C 12 30, 14 24, 22 24 S 32 27, 36 25" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".4"/>
+    <path d="M4 35 C 12 35, 14 29, 22 29 S 32 32, 36 30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".25"/>
+    <path d="M20 22 V 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M20 15 C 20 10, 24 7, 28 7 C 28 12, 24 15, 20 15 Z" fill="currentColor"/>
+    <path d="M20 19 C 20 15.5, 17 13.5, 14 13.5 C 14 17, 17 19, 20 19 Z" fill="currentColor" opacity=".55"/>
+  </symbol>
+</svg>
+
+<section id="s1">
+  <div class="hero">
+    <span class="new">公開しました</span>
+    <svg class="logo"><use href="#mark"/></svg>
+    <h1>みらい議会<br>＠遠賀町</h1>
+    <p class="lead">遠賀町議会の会議録から、<br><b>誰が何を質問し、<br>町がどう答えたか</b>を<br>スマホで読みやすく。</p>
+  </div>
+  <div class="foot"><span class="badge">非公式</span><span>個人運営のサイトです。遠賀町・遠賀町議会、<br>政党チームみらいとは関係ありません。</span></div>
+</section>
+
+<section id="s2">
+  <div class="brandline"><svg class="logo"><use href="#mark"/></svg>みらい議会＠遠賀町</div>
+  <p class="eyebrow" style="margin-top:44px">できること</p>
+  <h2>会議録を、<br>知りたいところから。</h2>
+  <div class="list">
+    <div class="item"><span class="t">一般質問を、質問事項ごとに</span><span class="s">通告書の質問事項と、町の答弁をあわせて読めます</span></div>
+    <div class="item"><span class="t">議案ごとに、流れをまとめて</span><span class="s">提案理由の説明・質疑・討論・議決結果を1ページで</span></div>
+    <div class="item"><span class="t">議員ごとに、発言をたどる</span><span class="s">一般質問や議案での発言を一覧できます</span></div>
+    <div class="item"><span class="t">ことばで検索</span><span class="s">「子育て」「道路」「防災」など、気になることばで</span></div>
+  </div>
+  <div class="foot"><span>令和元年以降の定例会・臨時会、57会議分。毎月、新しい会議録を追加します。</span></div>
+</section>
+
+<section id="s3">
+  <div class="brandline"><svg class="logo"><use href="#mark"/></svg>みらい議会＠遠賀町</div>
+  <p class="eyebrow" style="margin-top:44px">実際の画面</p>
+  <h2>スマホで、そのまま。</h2>
+  <div class="phones">
+    <div class="phone"><div class="frame"><div class="screen"><iframe src="https://miraigikai.onga-mirai-tech.com/" scrolling="no"></iframe></div></div>
+      <div class="cap">トップ<small>新しい会議から読めます</small></div></div>
+    <div class="phone"><div class="frame"><div class="screen"><iframe src="https://miraigikai.onga-mirai-tech.com/meetings/2026-t3/" scrolling="no"></iframe></div></div>
+      <div class="cap">定例会のページ<small>一般質問と議案の一覧</small></div></div>
+  </div>
+  <div class="foot"><span class="badge">非公式</span><span>遠賀町・遠賀町議会、政党チームみらいとは<br>関係ありません。</span></div>
+</section>
+
+<section id="s4">
+  <div class="brandline"><svg class="logo"><use href="#mark"/></svg>みらい議会＠遠賀町</div>
+  <p class="eyebrow" style="margin-top:44px">大切にしていること</p>
+  <h2>評価せず、<br>原文につなぐ。</h2>
+  <div class="list">
+    <div class="item"><span class="t">評価や順位づけをしません</span><span class="s">議員・会派・町を評価せず、並び順も日付や番号だけです</span></div>
+    <div class="item"><span class="t">すべての発言から原文へ</span><span class="s">遠賀町議会 会議録検索システムの該当箇所に移動できます</span></div>
+    <div class="item"><span class="t">AI要約は、そうと分かる形で</span><span class="s">AIが書いた部分は枠で示し、数字は原文と照合してから載せます</span></div>
+  </div>
+  <div class="link"><span class="t">サイトはプロフィールのリンクから</span><span class="u">miraigikai.onga-mirai-tech.com</span></div>
+  <div class="foot"><span class="badge">非公式</span><span>個人運営。正確な内容は必ず原典をご確認ください。</span></div>
+</section>
+
+</body></html>
