@@ -171,10 +171,21 @@ def css_version(path: str) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()[:8]
 
 
+# 原典（会議録検索システム・町公式HP）へのリンクは新しいタブで開く（2026-10-19）。
+# 原文を確かめた後、読んでいたページに戻りやすくするため。
+_SOURCE_LINK_RE = re.compile(
+    r'<a ((?:class="[^"]*" )?)href="((?:https?://iasb-sv\.town\.onga\.lg\.jp|https://www\.town\.onga\.lg\.jp)[^"]*)"'
+)
+
+
+def open_sources_in_new_tab(html_text: str) -> str:
+    return _SOURCE_LINK_RE.sub(r'<a \1href="\2" target="_blank" rel="noopener"', html_text)
+
+
 def page(site: Site, *, title: str, body: str, depth: int, description: str = "") -> str:
     root = "../" * depth or "./"
     v = css_version(str(CSS_SOURCE))
-    return f"""<!DOCTYPE html>
+    return open_sources_in_new_tab(f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -224,7 +235,7 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
 </div></footer>
 </body>
 </html>
-"""
+""")
 
 
 def crumb(depth: int, *parts: tuple[str, str]) -> str:
