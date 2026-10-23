@@ -101,7 +101,7 @@ python -m unittest discover -s pipeline/tests -t .
 
 投入と回収を分けているのは、Batch API の完了までが数分から十数時間と読めず、1ジョブ6時間の上限に収まる保証がないためです。**本番へは自動で出しません。** 月次更新は Pull Request として届き、人が確認してマージしたときだけ反映されます。
 
-使う Secrets は `DATA_REPO_DEPLOY_KEY`（データ用リポジトリ）、`ANTHROPIC_API_KEY`、`XSERVER_HOST` `XSERVER_USER` `XSERVER_SSH_KEY` `XSERVER_PUBLIC_DIR` `XSERVER_PREVIEW_DIR`（デプロイ）です。デプロイ用が未設定のあいだは、ビルドまでで止まります。
+使う Secrets は `DATA_REPO_DEPLOY_KEY`（データ用リポジトリ）、`ANTHROPIC_API_KEY`、`XSERVER_HOST` `XSERVER_USER` `XSERVER_SSH_KEY` `XSERVER_KNOWN_HOSTS` `XSERVER_PUBLIC_DIR` `XSERVER_PREVIEW_DIR`（デプロイ）です。`XSERVER_KNOWN_HOSTS` は接続先サーバーの指紋で、本物のサーバーかを毎回照合します。デプロイ用が未設定のあいだは、ビルドまでで止まります。
 
 ## 他の自治体で使うには
 

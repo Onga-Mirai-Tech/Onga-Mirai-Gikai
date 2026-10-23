@@ -46,6 +46,14 @@ class TestMemberSlug(unittest.TestCase):
     def test_falls_back_to_the_name(self):
         self.assertEqual(S.member_slug(self.site({}), "野口久美子"), "野口久美子")
 
+    def test_refuses_names_unsafe_for_urls_and_folders(self):
+        # 名前はURLにも書き出すフォルダ名にもなる。HTMLを壊す文字や、
+        # 別のフォルダへ抜ける区切りが入っていたら、黙って書き換えずに止める。
+        for bad in ("../x", "a/b", "a\\b", '"><script>', "<s>", ".hidden", "a b", "a　b",
+                    "a%2f", "a?b", "a#b", "a&b", ""):
+            with self.assertRaises(ValueError, msg=repr(bad)):
+                S.member_slug(self.site({}), bad)
+
 
 class TestMemberRole(unittest.TestCase):
     def test_member_titles(self):

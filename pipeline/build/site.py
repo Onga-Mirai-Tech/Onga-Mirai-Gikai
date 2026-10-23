@@ -406,7 +406,7 @@ def render_thread(site: Site, thread: dict) -> str:
         crumb(depth, (meeting["name"], f'meetings/{thread["meeting_id"]}/'), ("一般質問", ""))
         + f"<h1>{esc(title)}</h1>"
         + f'<p class="meta">{esc(thread["on"])} ／ {esc(thread["questioner_title"])}'
-        f'（<a href="../../members/{member_slug(site, thread["questioner"])}/">'
+        f'（<a href="../../members/{esc(member_slug(site, thread["questioner"]))}/">'
         f'{esc(thread["questioner"])}</a>） ／ 通告順{thread["order"]}</p>'
         + topics
         + render_ai_thread(site, thread)
@@ -1091,8 +1091,19 @@ def member_slug(site: Site, name: str) -> str:
     `masters/speakers.json` の `slugs` にローマ字があればそれを使う。
     無ければ氏名をそのまま使う（URLとしては動くが、共有するとパーセント符号化されて
     読みにくくなる。氏名の読みはこちらでは決められないので、人が入れる）。
+
+    この名前はURLにも、書き出すフォルダの名前にもなる。区切り（/ \\）、引用符や <>、
+    URLで意味を持つ記号、空白、先頭のドットが入っていたら、ビルドを止める（2026-10-23）。
+    黙って書き換えると別人のページと重なりうるので、人が masters で直す。
     """
-    return site.slugs.get(name, name)
+    slug = site.slugs.get(name, name)
+    if not slug or _UNSAFE_SLUG_RE.search(slug) or slug.startswith("."):
+        raise ValueError(f"議員ページのURLに使えない文字が入っています: {slug!r}"
+                         "（masters/speakers.json の slugs で別名を指定してください）")
+    return slug
+
+
+_UNSAFE_SLUG_RE = re.compile(r'[/\\\x00-\x20"\'<>&%?#\s]')
 
 
 def members_in_scope(site: Site) -> list[dict]:
@@ -1111,7 +1122,7 @@ def render_member_index(site: Site) -> str:
 
     def cards(group: list[dict]) -> str:
         return "".join(
-            f'<a class="card" href="../members/{member_slug(site, m["name"])}/">'
+            f'<a class="card" href="../members/{esc(member_slug(site, m["name"]))}/">'
             f'<span class="t">{esc(m["name"])}</span>'
             f'<span class="s">{esc("・".join(m["seats"]))}'
             f' ／ {esc(m["first"])} 〜 {esc(m["last"])}'

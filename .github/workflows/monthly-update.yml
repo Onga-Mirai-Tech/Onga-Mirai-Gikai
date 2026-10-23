@@ -39,27 +39,37 @@ jobs:
     timeout-minutes: 90
     steps:
       - name: コードを取得
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: データを取得（private リポジトリ）
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: Onga-Mirai-Tech/Onga-Mirai-Gikai-data
           path: data
           # 設定手順は docs/運用メモ.md を参照
           ssh-key: ${{ secrets.DATA_REPO_DEPLOY_KEY }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
 
       - name: 依存をインストール
         run: pip install -r requirements.txt
 
+      # 入力欄の値は ${{ }} でコマンドに直接埋めない（そのままシェルの文として解釈される）。
+      # 環境変数で受け取り、数字だけを通す。
       - name: 会議録を取得
+        env:
+          LIMIT: ${{ inputs.limit }}
         run: |
-          python -m pipeline.fetch.voices --allow-daytime \
-            ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
+          if [ -n "$LIMIT" ]; then
+            case "$LIMIT" in
+              *[!0-9]*) echo "limit は数字で指定してください: $LIMIT"; exit 1 ;;
+            esac
+            python -m pipeline.fetch.voices --allow-daytime --limit "$LIMIT"
+          else
+            python -m pipeline.fetch.voices --allow-daytime
+          fi
 
       # limit を指定した実行は動作確認なので、町の公式サイト側は触らない。
       - name: 通告書・審議案件結果を取得
