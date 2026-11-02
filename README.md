@@ -93,11 +93,14 @@ python -m unittest discover -s pipeline/tests -t .
 
 | ワークフロー | いつ | 何をするか |
 |---|---|---|
-| `monthly-update.yml` | 毎月2日 深夜 | 取得 → 整形 → 要約を Batch API に投入 |
+| `monthly-update.yml` | 毎月2日 深夜／手元の取得のあと | 町HPのPDFの取得 → 整形 → 要約を Batch API に投入（会議録の取得は手元。下記） |
 | `summarize-collect.yml` | 3時間おき | 要約が揃っていれば照合 → ビルド → プレビュー反映 → **Pull Request を作る** |
 | `deploy.yml` | main への push | 本番へ反映 |
 | `test.yml` | push・PR | テスト |
+| `check-reach.yml` | 手動 | 実行環境から町のサーバーへ接続できるかだけを確かめる |
 | `check-api-key.yml` | 手動 | `ANTHROPIC_API_KEY` で API につながるかを確かめる（キーを差し替えたとき） |
+
+**会議録の取得だけは手元（日本）で行います。** 会議録検索システムが、2026年11月から海外（GitHub Actions の実行環境）からの接続を受け付けなくなったためです。毎月2日以降の日本時間0〜6時に `scripts/fetch-voices-local.sh` を実行すると、取得した原文を data リポジトリに入れ、月次更新を起動します。
 
 投入と回収を分けているのは、Batch API の完了までが数分から十数時間と読めず、1ジョブ6時間の上限に収まる保証がないためです。**本番へは自動で出しません。** 月次更新は Pull Request として届き、人が確認してマージしたときだけ反映されます。
 
