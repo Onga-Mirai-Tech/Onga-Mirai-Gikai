@@ -65,12 +65,15 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           python -m pipeline.summarize.run --collect
-          remaining=$(python -m pipeline.summarize.run --count)
-          echo "未生成の要約: ${remaining}件"
+          pending=$(python -m pipeline.summarize.run --pending)
+          echo "回収待ちのバッチ: ${pending}件"
+          # 「回収待ちのバッチが0か」で決める。「未生成の要約が0か」で決めると、
+          # 1件でも生成に失敗したとき永久に先へ進めない。失敗したぶんは保存されないので、
+          # 次の月次更新で投げ直される（2026-11-03）。
           # 先へ進むかどうかは「yes」で渡す。件数（0）で比べると、このステップが
           # 飛ばされたときの空の出力（null）も 0 とみなされ、準備のできていない状態で
           # 照合やビルドに進んでしまう（GitHub Actions は型が違うと数に直して比べる）。
-          if [ "$remaining" = "0" ]; then echo "ready=yes" >> "$GITHUB_OUTPUT"; fi
+          if [ "$pending" = "0" ]; then echo "ready=yes" >> "$GITHUB_OUTPUT"; fi
 
       # まだ処理中なら、何もせず次の実行に回す。
       # 失敗したぶんは保存していないので、投げ直しも自動で効く。

@@ -15,6 +15,11 @@ name: monthly-update
 # 実行時間の目安: 初回の一括は約500リクエスト × 3秒 ＝ 25分前後。
 # 2回目以降は数件なので1分もかからない。
 #
+# **会議録の取得は手元（日本）で行う。** 会議録検索システムが海外からの接続を
+# 受け付けなくなったため（2026-11）。scripts/fetch-voices-local.sh が取得して
+# data リポジトリに push し、このワークフローを起動する。ここでは会議録の取得を飛ばし、
+# 通告書・審議案件結果（町公式HPは海外からもつながる）の取得から先を行う。
+#
 # 取得した原文は private の Onga-Mirai-Gikai-data に入れる。
 # このリポジトリには state.json（何をどこから取ったかの記録）だけをPRで戻す。
 
@@ -62,6 +67,14 @@ jobs:
         env:
           LIMIT: ${{ inputs.limit }}
         run: |
+          # 会議録検索システムは、2026年11月から海外（GitHub Actions の実行環境）からの
+          # 接続を受け付けなくなった（check-reach.yml で確認）。つながらないときは
+          # 失敗にせず飛ばし、手元で取得して data リポジトリに入れた原文で先へ進む。
+          # 手元での取得は scripts/fetch-voices-local.sh（docs/運用メモ.md「会議録の取得」）。
+          if ! timeout 15 bash -c '</dev/tcp/iasb-sv.town.onga.lg.jp/80' 2>/dev/null; then
+            echo "::notice::会議録検索システムに接続できないため、会議録の取得を飛ばしました。dataリポジトリにある原文で先へ進みます。"
+            exit 0
+          fi
           if [ -n "$LIMIT" ]; then
             case "$LIMIT" in
               *[!0-9]*) echo "limit は数字で指定してください: $LIMIT"; exit 1 ;;

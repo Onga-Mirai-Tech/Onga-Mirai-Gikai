@@ -9,7 +9,10 @@
 
 from __future__ import annotations
 
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from pipeline.summarize import compare as X
 from pipeline.summarize import prompt as P
@@ -151,6 +154,39 @@ class TestPrompt(unittest.TestCase):
 
     def test_version_is_recorded(self):
         self.assertRegex(P.PROMPT_VERSION, r"^\d{4}-\d{2}-\d{2}\.\d+$")
+
+
+class TestBatches(unittest.TestCase):
+    """回収済みのバッチを回収し直さない。回収待ちの要約を二重に投げない。"""
+
+    def write(self, root: Path, bid: str, ids: list[str], collected: bool) -> None:
+        d = R.batch_dir(root)
+        d.mkdir(parents=True, exist_ok=True)
+        meta = {"batch_id": bid, "mapping": {f"t{i:05d}": {"id": x, "kind": "thread"}
+                                             for i, x in enumerate(ids)}}
+        if collected:
+            meta["collected_at"] = "2026-11-03T00:00:00+00:00"
+        (d / f"{bid}.json").write_text(json.dumps(meta), encoding="utf-8")
+
+    def test_only_uncollected_batches_are_pending(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write(root, "msgbatch_old", ["a"], collected=True)
+            self.write(root, "msgbatch_new", ["b", "c"], collected=False)
+            self.assertEqual(R.pending_batches(root), ["msgbatch_new"])
+
+    def test_items_in_pending_batches_are_in_flight(self):
+        # 回収待ちに入っているものは、次の投入の対象から外す
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write(root, "msgbatch_old", ["a"], collected=True)
+            self.write(root, "msgbatch_new", ["b", "c"], collected=False)
+            self.assertEqual(R.in_flight_ids(root), {"b", "c"})
+
+    def test_no_batches(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(R.pending_batches(Path(tmp)), [])
+            self.assertEqual(R.in_flight_ids(Path(tmp)), set())
 
 
 if __name__ == "__main__":

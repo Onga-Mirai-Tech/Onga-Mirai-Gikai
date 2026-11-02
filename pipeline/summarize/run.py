@@ -51,15 +51,49 @@ def custom_id(kind: str, index: int) -> str:
     return f"{kind[0]}{index:05d}"
 
 
+def pending_batches(root: Path) -> list[str]:
+    """まだ回収していないバッチのID。
+
+    回収し終えたバッチには `collected_at` を書き込む（collect）。
+    印のないものだけを回収するので、過去のバッチを回収し直して
+    作り直した要約を古い版で上書きすることがない（2026-11-03）。
+    """
+    out = []
+    for f in sorted(batch_dir(root).glob("*.json")):
+        meta = json.loads(f.read_text(encoding="utf-8"))
+        if not meta.get("collected_at"):
+            out.append(f.stem)
+    return out
+
+
+def in_flight_ids(root: Path) -> set[str]:
+    """回収待ちのバッチに入っている一般質問・議案のID。
+
+    月次更新が同じ月に2回動いても（自動の実行と、手元で取得した後の実行）、
+    同じ要約を二重に投げないようにする。
+    """
+    ids: set[str] = set()
+    for bid in pending_batches(root):
+        meta = json.loads((batch_dir(root) / f"{bid}.json").read_text(encoding="utf-8"))
+        ids.update(m["id"] for m in meta["mapping"].values())
+    return ids
+
+
 def targets(root: Path, regenerate: bool) -> list[tuple[str, dict, str]]:
-    """要約を作る対象を集める。(種別, 元データ, 入力テキスト) を返す。"""
+    """要約を作る対象を集める。(種別, 元データ, 入力テキスト) を返す。
+
+    回収待ちのバッチに入っているものは除く（in_flight_ids）。
+    """
     threads, bills = C.load_normalized(root)
     items: list[tuple[str, dict, str]] = []
+    flying = in_flight_ids(root)
 
     for t in threads:
         if t["on"][:4] < FIRST_YEAR:
             continue
         if not regenerate and (out_dir(root, "thread") / f"{t['id']}.json").exists():
+            continue
+        if t["id"] in flying:
             continue
         items.append(("thread", t, C.thread_input(root, t)))
 
@@ -71,6 +105,8 @@ def targets(root: Path, regenerate: bool) -> list[tuple[str, dict, str]]:
         if not any(b.get("content", {}).get(k) for k in ("質疑", "討論")):
             continue
         if not regenerate and (out_dir(root, "bill") / f"{b['id']}.json").exists():
+            continue
+        if b["id"] in flying:
             continue
         items.append(("bill", b, C.bill_input(root, b)))
 
@@ -284,6 +320,12 @@ def collect(client, root: Path, batch_id: str) -> tuple[int, int, int]:
         saved += 1
         if not ok:
             flagged += 1
+
+    # 終わったバッチに印をつける。失敗したぶんは要約を保存していないので、
+    # 次の月次更新で「未生成」として投げ直される。
+    meta["collected_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    (batch_dir(root) / f"{batch_id}.json").write_text(
+        json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     return saved, flagged, failed
 
 
@@ -300,7 +342,9 @@ def main(argv: list[str] | None = None) -> int:
                     help="この一般質問・議案だけを対象にする。--regenerate と組み合わせて、"
                          "検証で落ちた要約だけを作り直すときに使う")
     ap.add_argument("--count", action="store_true",
-                    help="未生成の件数だけを出す。ワークフローの分岐に使う")
+                    help="未生成で、回収待ちでもない件数だけを出す。投入するかどうかの分岐に使う")
+    ap.add_argument("--pending", action="store_true",
+                    help="まだ回収していないバッチの数だけを出す。回収が終わったかどうかの分岐に使う")
     ap.add_argument("--reverify", action="store_true",
                     help="保存済みの要約を、いまの検証でもう一度確かめる（APIは使わない）")
     ap.add_argument("--only", choices=("thread", "bill"),
@@ -310,8 +354,14 @@ def main(argv: list[str] | None = None) -> int:
     root = Path(__file__).resolve().parents[2]
 
     if args.count:
-        # 数字だけを出す。回収が終わったかどうかをワークフローが判断するために使う。
+        # 数字だけを出す。投入するものがあるかをワークフローが判断するために使う。
         print(len(targets(root, regenerate=False)))
+        return 0
+
+    if args.pending:
+        # 回収待ちのバッチの数。0 になったら照合とビルドに進める。
+        # 「未生成の件数が0か」で判断すると、1件でも失敗したとき永久に先へ進めない。
+        print(len(pending_batches(root)))
         return 0
 
     if args.reverify:
@@ -343,8 +393,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.collect:
         import anthropic
         client = anthropic.Anthropic(api_key=V.load_key(root))
-        ids = ([args.collect] if args.collect != "all"
-               else sorted(p.stem for p in batch_dir(root).glob("*.json")))
+        ids = [args.collect] if args.collect != "all" else pending_batches(root)
+        if not ids:
+            print("回収待ちのバッチはありません。")
         total = [0, 0, 0]
         for bid in ids:
             print(f"■ {bid}")
