@@ -1,5 +1,5 @@
 {
-  "last_checked_at": "2026-11-04T03:57:06+09:00",
+  "last_checked_at": "2026-11-04T03:57:59+09:00",
   "fetched": [
     {
       "url": "https://www.town.onga.lg.jp/uploaded/attachment/10205.pdf",
@@ -1308,14 +1308,14 @@
       "path": "data/raw/kekka/_pages/81800.html",
       "sha256": "5bcb489f0fb63bcee61e72f52f333d64e91bceea5dc5390ba8337ddad3435e41",
       "bytes": 21946,
-      "fetched_at": "2026-10-02T06:42:40+09:00"
+      "fetched_at": "2026-11-04T03:57:51+09:00"
     },
     {
       "url": "https://www.town.onga.lg.jp/site/gikai/list20-65.html",
       "path": "data/raw/kekka/_pages/index.html",
       "sha256": "a16ccab8b2120196498055eb19bbec21f7199932b644a528f30dc58896d635a6",
       "bytes": 21689,
-      "fetched_at": "2026-10-02T06:42:37+09:00"
+      "fetched_at": "2026-11-04T03:57:47+09:00"
     },
     {
       "url": "https://www.town.onga.lg.jp/uploaded/attachment/10413.pdf",
@@ -2036,14 +2036,14 @@
       "path": "data/raw/tsukokusho/_pages/83670.html",
       "sha256": "631f380f59782f9573a763e66f278318c3079e88d9ff9162c54804909cf06466",
       "bytes": 21736,
-      "fetched_at": "2026-10-02T06:42:48+09:00"
+      "fetched_at": "2026-11-04T03:57:59+09:00"
     },
     {
       "url": "https://www.town.onga.lg.jp/site/gikai/list20-62.html",
       "path": "data/raw/tsukokusho/_pages/index.html",
       "sha256": "ff5a9265a76cba6e5ec5fcc9a316e1bb18b0247bd9e26014a5e40830d795c840",
       "bytes": 21510,
-      "fetched_at": "2026-10-02T06:42:44+09:00"
+      "fetched_at": "2026-11-04T03:57:55+09:00"
     },
     {
       "url": "http://iasb-sv.town.onga.lg.jp/voices/cgi/voiweb.exe?ACT=203&FINO=1&HATSUGENMODE=1&HYOUJIMODE=0&STYLE=0",
