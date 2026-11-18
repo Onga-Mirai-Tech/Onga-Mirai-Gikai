@@ -104,16 +104,17 @@ _KIND_SLUG = {
 
 
 def esc(s: str) -> str:
-    """会議録・通告書・議案名・人名など、**公式資料から持ってきた文字**をHTMLに入れる。
+    """会議録の発言・人名など、**ふりがなを付けない文字**をHTMLに入れる。
 
-    ふりがなを付けない印も一緒に付ける（pipeline/build/furigana.py）。
+    付けない印も一緒に付ける（pipeline/build/furigana.py）。
     自動の読みが公式の記録の上に載ると、読みの誤りが原文の誤りのように見えるため。
     """
     return FG.mark_source(esc_text(s))
 
 
 def esc_text(s: str) -> str:
-    """このサイトが書いた文とAI要約をHTMLに入れる。ふりがなを付けてよい。"""
+    """このサイトが書いた文、AI要約、見出しに使う公式の文言（質問事項・議案名・会議名）を
+    HTMLに入れる。ふりがなを付けてよい。"""
     return html.escape(FG.strip_marks(s or ""), quote=True)
 
 
@@ -266,7 +267,7 @@ def crumb(depth: int, *parts: tuple[str, str]) -> str:
     root = "../" * depth or "./"
     items = [f'<a href="{root}">トップ</a>']
     for label, href in parts:
-        # 会議名は公式の名前なので、呼び出し側が FG.mark_source() で包んで渡す（ふりがなを付けない）
+        # ふりがなを付けない文字は、呼び出し側が FG.mark_source() で包んで渡す
         text = esc(FG.strip_marks(label)) if label.startswith(FG.SRC_OPEN) else esc_text(label)
         items.append(f'<a href="{root}{href}">{text}</a>' if href else text)
     return f'<p class="crumb">{" ＞ ".join(items)}</p>'
@@ -336,7 +337,7 @@ def render_ai_thread(site: Site, thread: dict) -> str:
         heading = official.get(topic.get("no"), topic.get("title", ""))
         blocks.append(
             f'<h3 id="t{topic.get("no", "")}">{topic.get("no", "")}. '
-            f'{esc(heading)}</h3>{points}')
+            f'{esc_text(heading)}</h3>{points}')
     if not blocks:
         return ""
     return (f'<h2>AI要約</h2><div class="ai"><p class="tag">{AI_NOTE}</p>'
@@ -377,6 +378,14 @@ def thread_heading(thread: dict, *, with_name: bool = True) -> str:
     return f'{thread["questioner"]}議員の一般質問' if with_name else "一般質問"
 
 
+def thread_heading_html(thread: dict, *, with_name: bool = True) -> str:
+    """見出しをHTMLにする。氏名にはふりがなを付けない。"""
+    topics = thread.get("topics") or []
+    if len(topics) == 1:
+        return esc_text(topics[0]["title"])
+    return (esc(thread["questioner"]) + esc_text("議員の一般質問")) if with_name else esc_text("一般質問")
+
+
 def topic_lines(thread: dict) -> str:
     """質問事項を通告書の番号つきで並べる。一覧のカードの中で使う。
 
@@ -387,7 +396,7 @@ def topic_lines(thread: dict) -> str:
     if len(topics) < 2:
         return ""
     return '<span class="topics">' + "".join(
-        f'<span><i>{t["no"]}</i>{esc(t["title"])}</span>' for t in topics
+        f'<span><i>{t["no"]}</i>{esc_text(t["title"])}</span>' for t in topics
     ) + "</span>"
 
 
@@ -402,8 +411,8 @@ def render_thread(site: Site, thread: dict) -> str:
         # 4テーマの往復が1ページに並ぶので、読みたいところまで遠い。
         linked = summarized_topics(site, thread)
         items = "".join(
-            (f'<p><a href="#t{t["no"]}">{t["no"]}. {esc(t["title"])}</a></p>'
-             if t["no"] in linked else f'<p>{t["no"]}. {esc(t["title"])}</p>')
+            (f'<p><a href="#t{t["no"]}">{t["no"]}. {esc_text(t["title"])}</a></p>'
+             if t["no"] in linked else f'<p>{t["no"]}. {esc_text(t["title"])}</p>')
             for t in thread["topics"]
         )
         note = ('<span class="tag">一般質問通告書より　／　項目を押すと要約の該当箇所に移動します</span>'
@@ -429,8 +438,8 @@ def render_thread(site: Site, thread: dict) -> str:
     meeting = site.meetings[thread["meeting_id"]]
     title = thread_heading(thread)
     body = (
-        crumb(depth, (FG.mark_source(meeting["name"]), f'meetings/{thread["meeting_id"]}/'), ("一般質問", ""))
-        + f"<h1>{esc(title)}</h1>"
+        crumb(depth, (meeting["name"], f'meetings/{thread["meeting_id"]}/'), ("一般質問", ""))
+        + f"<h1>{thread_heading_html(thread)}</h1>"
         + f'<p class="meta">{esc(thread["on"])} ／ {esc(thread["questioner_title"])}'
         f'（<a href="../../members/{esc(member_slug(site, thread["questioner"]))}/">'
         f'{esc(thread["questioner"])}</a>） ／ 通告順{thread["order"]}</p>'
@@ -565,9 +574,9 @@ def render_bill(site: Site, bill: dict) -> str:
         discussion = '<h2>質疑・討論</h2><div class="referral">質疑・討論はありませんでした。</div>'
 
     body = (
-        crumb(depth, (FG.mark_source(meeting["name"]), f'meetings/{bill["meeting_id"]}/'), ("議案", ""))
-        + f'<h1>{esc(bill["number"])}</h1>'
-        + f'<p class="meta">{esc(bill["title"])}</p>'
+        crumb(depth, (meeting["name"], f'meetings/{bill["meeting_id"]}/'), ("議案", ""))
+        + f'<h1>{esc_text(bill["number"])}</h1>'
+        + f'<p class="meta">{esc_text(bill["title"])}</p>'
         + f"<dl class=\"kv\">{kv}</dl>"
         + vote
         + render_ai_bill(site, bill)
@@ -594,7 +603,7 @@ def render_meeting(site: Site, mid: str, meeting: dict) -> str:
 
     q_cards = "".join(
         f'<a class="card" href="../../questions/{thread_slug(t)}/">'
-        f'<span class="t">{esc(thread_heading(t))}</span>'
+        f'<span class="t">{thread_heading_html(t)}</span>'
         f'<span class="s"><span class="mark">◆</span>{esc(t["questioner"])} 議員 ／ {esc(t["on"])}'
         + (f' ／ 質問事項 {len(t["topics"])}件' if t["topics"] else "")
         + "</span>" + topic_lines(t) + "</a>"
@@ -603,7 +612,7 @@ def render_meeting(site: Site, mid: str, meeting: dict) -> str:
 
     b_cards = "".join(
         f'<a class="card" href="../../bills/{bill_slug(b["id"])}/">'
-        f'<span class="t">{esc(b["number"])}　{esc(b["title"])}</span>'
+        f'<span class="t">{esc_text(b["number"])}　{esc_text(b["title"])}</span>'
         f'<span class="s">{esc(b["decided_on"] or b["submitted_on"])}'
         + (f' ／ {esc(b["result"])}' if b["result"] else "")
         + (f' ／ {esc("・".join(b["committees"]))}に付託' if b["committees"] else "")
@@ -615,7 +624,7 @@ def render_meeting(site: Site, mid: str, meeting: dict) -> str:
     summary = "、".join(f"{k}{v}件" for k, v in results.most_common())
     body = (
         crumb(depth, ("会議一覧", "meetings/"))
-        + f'<h1>{esc(meeting["name"])}</h1>'
+        + f'<h1>{esc_text(meeting["name"])}</h1>'
         + f'<p class="meta">{esc(meeting["first"])} 〜 {esc(meeting["last"])} ／ 全{len(meeting["days"])}日'
         f'<br>一般質問 {len(threads)}件 ／ 議案 {len(bills)}件'
         + (f"（{esc(summary)}）" if summary else "") + "</p>"
@@ -635,7 +644,7 @@ def render_meeting_index(site: Site) -> str:
     out = []
     for year in sorted(by_year, reverse=True):
         cards = "".join(
-            f'<a class="card" href="../meetings/{mid}/"><span class="t">{esc(m["name"])}</span>'
+            f'<a class="card" href="../meetings/{mid}/"><span class="t">{esc_text(m["name"])}</span>'
             f'<span class="s">{esc(m["first"])} 〜 {esc(m["last"])} ／ 全{len(m["days"])}日</span></a>'
             for mid, m in sorted(by_year[year], key=lambda x: x[1]["first"], reverse=True)
         )
@@ -670,7 +679,7 @@ def render_index(site: Site) -> str:
     recent = sorted(site.threads, key=lambda t: t["on"], reverse=True)[:6]
     q_cards = "".join(
         f'<a class="card" href="questions/{thread_slug(t)}/">'
-        f'<span class="t">{esc(thread_heading(t))}</span>'
+        f'<span class="t">{thread_heading_html(t)}</span>'
         f'<span class="s"><span class="mark">◆</span>{esc(t["questioner"])} 議員 ／ {esc(t["on"])}</span>'
         + topic_lines(t) + "</a>"
         for t in recent
@@ -682,7 +691,7 @@ def render_index(site: Site) -> str:
         bills = sum(1 for b in site.bills if b["meeting_id"] == mid)
         latest_card = (
             f'<h2>いちばん新しい会議</h2><a class="card" href="meetings/{mid}/">'
-            f'<span class="t">{esc(m["name"])}</span>'
+            f'<span class="t">{esc_text(m["name"])}</span>'
             f'<span class="s">{esc(m["first"])} 〜 {esc(m["last"])}・全{len(m["days"])}日<br>'
             f"一般質問 {threads}件 ／ 議案 {bills}件</span></a>"
         )
@@ -1086,10 +1095,11 @@ def render_about(site: Site) -> str:
         '<span class="s">ページ上部の「ふりがな」ボタンで、表示と非表示を切り替えられます。'
         "読みは、このサイトが書いた文とAI要約に、読みの辞書（Sudachi）を使って自動で付けています。"
         "誤った読みが付いていることがあります。お気づきの点はご連絡ください。</span></div>"
-        '<div class="card"><span class="t">会議録などの原文には付けません</span>'
-        '<span class="s">会議録の発言、一般質問通告書の質問事項、議案名、会議名、人の名前など、'
-        "公式資料から持ってきた文字にはふりがなを付けていません。"
+        '<div class="card"><span class="t">会議録の発言と人の名前には付けません</span>'
+        '<span class="s">会議録の発言と人の名前にはふりがなを付けていません。'
         "自動で付けた読みの誤りが、原文の誤りのように見えないようにするためです。"
+        "一般質問通告書の質問事項、議案名、会議名は、見出しとして読みやすいようにふりがなを付けています。"
+        "ふりがなは原典にはないもので、自動で付けた読みです。"
         "地名などの固有名詞は、読みを確かめたものにだけ付けています。</span></div>"
         "</div>"
         + "<h2>載せている期間</h2><div class=\"referral\">"
@@ -1214,8 +1224,8 @@ def render_member(site: Site, m: dict) -> str:
 
     q_cards = "".join(
         f'<a class="card" href="../../questions/{thread_slug(t)}/">'
-        f'<span class="t">{esc(thread_heading(t, with_name=False))}</span>'
-        f'<span class="s">{esc(site.meetings[t["meeting_id"]]["name"])} ／ {esc(t["on"])}'
+        f'<span class="t">{thread_heading_html(t, with_name=False)}</span>'
+        f'<span class="s">{esc_text(site.meetings[t["meeting_id"]]["name"])} ／ {esc_text(t["on"])}'
         + (f' ／ 質問事項 {len(t["topics"])}件' if len(t["topics"]) > 1 else "")
         + "</span>" + topic_lines(t) + "</a>"
         for t in threads
@@ -1223,8 +1233,8 @@ def render_member(site: Site, m: dict) -> str:
 
     b_cards = "".join(
         f'<a class="card" href="../../bills/{bill_slug(b["id"])}/">'
-        f'<span class="t">{esc(b["number"])}　{esc(b["title"])}</span>'
-        f'<span class="s">{esc(b["meeting"])} ／ {esc(b["decided_on"] or b["submitted_on"])}</span></a>'
+        f'<span class="t">{esc_text(b["number"])}　{esc_text(b["title"])}</span>'
+        f'<span class="s">{esc_text(b["meeting"])} ／ {esc_text(b["decided_on"] or b["submitted_on"])}</span></a>'
         for b in bills[:40]
     )
 

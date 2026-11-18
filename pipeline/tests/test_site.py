@@ -103,7 +103,7 @@ class TestParagraphs(unittest.TestCase):
 
 
 class TestFuriganaScope(unittest.TestCase):
-    def test_ai_summary_is_read_but_official_heading_is_not(self):
+    def test_ai_summary_and_official_heading_are_read(self):
         site = S.Site(out=None, transcripts={}, fino={}, threads=[], bills=[], speakers={},
                       meetings={}, slugs={}, member_bills={}, current_members=set(),
                       summaries={"x": {"summary": {"topics": [{"no": 1, "title": "AIの見出し", "points": [
@@ -112,7 +112,17 @@ class TestFuriganaScope(unittest.TestCase):
         thread = {"id": "x", "unid": "K", "topics": [{"no": 1, "title": "学校給食について"}]}
         got = S.page(site, title="t", body=S.render_ai_thread(site, thread), depth=0)
         self.assertIn("<ruby>給食<rt>きゅうしょく</rt></ruby>の", got)
-        self.assertIn("1. 学校給食について</h3>", got)
+        self.assertIn("<ruby>学校<rt>がっこう</rt></ruby><ruby>給食", got)
+
+    def test_transcript_and_names_are_not_read(self):
+        site = S.Site(out=None, transcripts={}, fino={}, threads=[], bills=[], speakers={},
+                      meetings={}, slugs={}, member_bills={}, current_members=set(),
+                      summaries={}, kekka={}, furigana=FG.Furigana())
+        body = S.paragraphs("給食の無償化について") + S.thread_heading_html(
+            {"questioner": "野口久美子", "topics": []})
+        got = S.page(site, title="t", body=body, depth=0)
+        self.assertIn("<p>給食の無償化について</p>", got)
+        self.assertIn("野口久美子<ruby>議員", got)
 
 
 class TestEscape(unittest.TestCase):

@@ -297,7 +297,7 @@ h2::after { content: ""; flex: 1; height: 1px; background: var(--rule-soft); }
  * 見出しだけでは何を尋ねたのか分からないので、一覧の時点で中身を見せる。
  */
 .card .topics { display: grid; gap: 4px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--rule-soft); }
-.card .topics span { display: flex; gap: 7px; font-size: 13px; line-height: 1.7; color: var(--ink-soft); }
+.card .topics > span { display: flex; gap: 7px; font-size: 13px; line-height: 1.7; color: var(--ink-soft); }
 .card .topics i {
   flex: none; font-style: normal; font-family: var(--round); font-size: 11px;
   color: var(--accent); background: var(--accent-wash);
