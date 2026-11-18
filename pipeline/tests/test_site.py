@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import unittest
 
+from pipeline.build import furigana as FG
 from pipeline.build import site as S
 
 
@@ -84,7 +85,11 @@ class TestMembersInScope(unittest.TestCase):
 class TestParagraphs(unittest.TestCase):
     def test_splits_on_newlines(self):
         got = S.paragraphs("一点目です。\n　二点目です。")
-        self.assertEqual(got, "<p>一点目です。</p><p>二点目です。</p>")
+        self.assertEqual(FG.strip_marks(got), "<p>一点目です。</p><p>二点目です。</p>")
+
+    def test_transcript_is_marked_as_source(self):
+        # 会議録の発言にはふりがなを付けない（pipeline/build/furigana.py）
+        self.assertIn(FG.SRC_OPEN, S.paragraphs("一点目です。"))
 
     def test_escapes_html(self):
         self.assertIn("&lt;script&gt;", S.paragraphs("<script>"))
@@ -95,6 +100,19 @@ class TestParagraphs(unittest.TestCase):
 
     def test_empty_text(self):
         self.assertEqual(S.paragraphs(""), "<p></p>")
+
+
+class TestFuriganaScope(unittest.TestCase):
+    def test_ai_summary_is_read_but_official_heading_is_not(self):
+        site = S.Site(out=None, transcripts={}, fino={}, threads=[], bills=[], speakers={},
+                      meetings={}, slugs={}, member_bills={}, current_members=set(),
+                      summaries={"x": {"summary": {"topics": [{"no": 1, "title": "AIの見出し", "points": [
+                          {"question": "給食の無償化", "answer": "検討する", "huids": []}]}]}}},
+                      kekka={}, furigana=FG.Furigana())
+        thread = {"id": "x", "unid": "K", "topics": [{"no": 1, "title": "学校給食について"}]}
+        got = S.page(site, title="t", body=S.render_ai_thread(site, thread), depth=0)
+        self.assertIn("<ruby>給食<rt>きゅうしょく</rt></ruby>の", got)
+        self.assertIn("1. 学校給食について</h3>", got)
 
 
 class TestEscape(unittest.TestCase):

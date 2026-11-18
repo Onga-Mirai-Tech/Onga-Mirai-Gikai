@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
+from pipeline.build import furigana as FG
 from pipeline.common.http import decode_cp932
 from pipeline.fetch.voices import unid_to_date
 from pipeline.parse import transcript as T
@@ -103,7 +104,17 @@ _KIND_SLUG = {
 
 
 def esc(s: str) -> str:
-    return html.escape(s or "", quote=True)
+    """会議録・通告書・議案名・人名など、**公式資料から持ってきた文字**をHTMLに入れる。
+
+    ふりがなを付けない印も一緒に付ける（pipeline/build/furigana.py）。
+    自動の読みが公式の記録の上に載ると、読みの誤りが原文の誤りのように見えるため。
+    """
+    return FG.mark_source(esc_text(s))
+
+
+def esc_text(s: str) -> str:
+    """このサイトが書いた文とAI要約をHTMLに入れる。ふりがなを付けてよい。"""
+    return html.escape(FG.strip_marks(s or ""), quote=True)
 
 
 def paragraphs(text: str) -> str:
@@ -149,6 +160,8 @@ class Site:
     summaries: dict[str, dict]
     # 議案ID → 町HP「審議案件・結果」PDFの議決結果。表記が違うときに併記する
     kekka: dict[str, dict]
+    # ふりがなを付ける。None なら付けない（テスト用）
+    furigana: FG.Furigana | None = None
 
     def voices_url(self, unid: str, huid: int | None = None) -> str:
         f = self.fino.get(unid)
@@ -182,10 +195,16 @@ def open_sources_in_new_tab(html_text: str) -> str:
     return _SOURCE_LINK_RE.sub(r'<a \1href="\2" target="_blank" rel="noopener"', html_text)
 
 
+# ふりがなの表示・非表示を切り替える。<head> で読み、表示が切り替わる前の
+# ちらつきを防ぐ（本文を描く前に <html> に印を付ける）。
+FURIGANA_JS = Path(__file__).resolve().parents[2] / "site" / "assets" / "furigana.js"
+
+
 def page(site: Site, *, title: str, body: str, depth: int, description: str = "") -> str:
     root = "../" * depth or "./"
     v = css_version(str(CSS_SOURCE))
-    return open_sources_in_new_tab(f"""<!DOCTYPE html>
+    fv = css_version(str(FURIGANA_JS))
+    out = f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -204,11 +223,13 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
 <link rel="icon" href="{root}assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="{root}assets/apple-touch-icon.png">
 <link rel="stylesheet" href="{root}assets/style.css?v={v}">
+<script src="{root}assets/furigana.js?v={fv}"></script>
 </head>
 <body>
 <header class="site-head"><div class="inner">
   <a class="logo" href="{root}">{LOGO_SVG}<span><span class="n">{SITE_NAME}</span></span></a>
   <span class="badge-unofficial">非公式</span>
+  <button id="furigana-toggle" class="furigana-toggle" type="button" aria-pressed="false" hidden>ふりがな</button>
 </div></header>
 <div class="top-notice" role="note"><div class="inner">
   <b>{TOP_NOTICE_HEAD}</b>{TOP_NOTICE_BODY}<a href="{root}about/">このサイトについて</a>
@@ -235,14 +256,19 @@ def page(site: Site, *, title: str, body: str, depth: int, description: str = ""
 </div></footer>
 </body>
 </html>
-""")
+"""
+    if site.furigana:
+        out = site.furigana.annotate(out)
+    return open_sources_in_new_tab(FG.strip_marks(out))
 
 
 def crumb(depth: int, *parts: tuple[str, str]) -> str:
     root = "../" * depth or "./"
     items = [f'<a href="{root}">トップ</a>']
     for label, href in parts:
-        items.append(f'<a href="{root}{href}">{esc(label)}</a>' if href else esc(label))
+        # 会議名は公式の名前なので、呼び出し側が FG.mark_source() で包んで渡す（ふりがなを付けない）
+        text = esc(FG.strip_marks(label)) if label.startswith(FG.SRC_OPEN) else esc_text(label)
+        items.append(f'<a href="{root}{href}">{text}</a>' if href else text)
     return f'<p class="crumb">{" ＞ ".join(items)}</p>'
 
 
@@ -301,8 +327,8 @@ def render_ai_thread(site: Site, thread: dict) -> str:
     for topic in s["summary"].get("topics", []):
         points = "".join(
             '<div class="qa">'
-            f'<p class="q">{esc(pt.get("question", ""))}</p>'
-            f'<p class="a">{esc(pt.get("answer", ""))}</p>'
+            f'<p class="q">{esc_text(pt.get("question", ""))}</p>'
+            f'<p class="a">{esc_text(pt.get("answer", ""))}</p>'
             + ai_sources(site, pt.get("huids", []), lambda _h: unid)
             + "</div>"
             for pt in topic.get("points", [])
@@ -327,8 +353,8 @@ def render_ai_bill(site: Site, bill: dict) -> str:
     for pt in s["summary"].get("points", []):
         blocks.append(
             '<div class="qa">'
-            f'<p class="k">{esc(pt.get("kind", ""))}</p>'
-            f'<p>{esc(pt.get("text", ""))}</p>'
+            f'<p class="k">{esc_text(pt.get("kind", ""))}</p>'
+            f'<p>{esc_text(pt.get("text", ""))}</p>'
             + ai_sources(site, pt.get("huids", []), lambda h: where.get(int(h), ""))
             + "</div>"
         )
@@ -403,7 +429,7 @@ def render_thread(site: Site, thread: dict) -> str:
     meeting = site.meetings[thread["meeting_id"]]
     title = thread_heading(thread)
     body = (
-        crumb(depth, (meeting["name"], f'meetings/{thread["meeting_id"]}/'), ("一般質問", ""))
+        crumb(depth, (FG.mark_source(meeting["name"]), f'meetings/{thread["meeting_id"]}/'), ("一般質問", ""))
         + f"<h1>{esc(title)}</h1>"
         + f'<p class="meta">{esc(thread["on"])} ／ {esc(thread["questioner_title"])}'
         f'（<a href="../../members/{esc(member_slug(site, thread["questioner"]))}/">'
@@ -439,7 +465,7 @@ def dual(minutes: str, pdf: str) -> tuple[str, bool]:
     if not pdf or pdf == minutes:
         return esc(minutes), False
     pair = "".join(
-        f'<span class="pair"><b>{esc(v)}</b><small>{esc(label)}</small></span>'
+        f'<span class="pair"><b>{esc(v)}</b><small>{esc_text(label)}</small></span>'
         for v, label in ((minutes, MINUTES_LABEL), (pdf, KEKKA_LABEL))
         if v
     )
@@ -460,7 +486,7 @@ def render_bill(site: Site, bill: dict) -> str:
     result_html, d = dual(bill["result"] or "", k.get("result") or "")
     differs = differs or d
     rows.append(("議決結果", result_html or "（会議録から判定できませんでした）"))
-    kv = "".join(f"<dt>{esc(key)}</dt><dd>{val}</dd>" for key, val in rows)
+    kv = "".join(f"<dt>{esc_text(key)}</dt><dd>{val}</dd>" for key, val in rows)
     if differs:
         kv += f'<dt></dt><dd><span class="asis">{ASIS_NOTE}</span></dd>'
 
@@ -539,7 +565,7 @@ def render_bill(site: Site, bill: dict) -> str:
         discussion = '<h2>質疑・討論</h2><div class="referral">質疑・討論はありませんでした。</div>'
 
     body = (
-        crumb(depth, (meeting["name"], f'meetings/{bill["meeting_id"]}/'), ("議案", ""))
+        crumb(depth, (FG.mark_source(meeting["name"]), f'meetings/{bill["meeting_id"]}/'), ("議案", ""))
         + f'<h1>{esc(bill["number"])}</h1>'
         + f'<p class="meta">{esc(bill["title"])}</p>'
         + f"<dl class=\"kv\">{kv}</dl>"
@@ -662,7 +688,7 @@ def render_index(site: Site) -> str:
         )
     body = (
         "<h1>遠賀町議会で、<br>いま話されていること</h1>"
-        f'<p class="lead">{esc(coverage_label(site))}からの会議録を、読みやすく並べ直しています。'
+        f'<p class="lead">{esc_text(coverage_label(site))}からの会議録を、読みやすく並べ直しています。'
         f"いま載せているのは{len(site.meetings)}会議です。"
         "それより前の会議録は、遠賀町議会の会議録検索システムでご覧になれます。</p>"
         '<h2>さがす</h2><div class="chips">'
@@ -702,6 +728,8 @@ CONTACT_X = "https://x.com/OngaMiraiTech"
 CONTACT_INSTAGRAM = "https://www.instagram.com/onga_no_mirai"
 # 施行日。変えたら「改訂」として日付を足す。
 POLICY_ENACTED = "2026年9月24日"
+# プライバシーポリシーの改訂日。ふりがなの設定をブラウザに保存するようにした（2026-11-19）。
+PRIVACY_REVISED = "2026年11月19日"
 
 
 def contact_channels() -> list[tuple[str, str, str]]:
@@ -724,20 +752,21 @@ def contact_links() -> str:
 def contact_block() -> str:
     lines = "<br>".join(f'{kind}：<a href="{url}">{esc(label)}</a>'
                         for kind, label, url in contact_channels())
-    return f'<div class="referral"><b>{esc(OPERATOR)}</b><br>{lines}</div>'
+    return f'<div class="referral"><b>{esc_text(OPERATOR)}</b><br>{lines}</div>'
 
 
 def legal_page(site: Site, *, title: str, lead: str, sections: list[tuple[str, str]],
-               description: str) -> str:
+               description: str, revised: str = "") -> str:
     """規約類のページ。見出しと本文の組を並べるだけの、長文を読むための組み方。"""
     depth = 1
     body = (
         crumb(depth, (title, ""))
-        + f"<h1>{esc(title)}</h1>"
+        + f"<h1>{esc_text(title)}</h1>"
         + f'<p class="lead">{lead}</p>'
-        + "".join(f'<h2>{esc(h)}</h2><div class="prose">{html}</div>' for h, html in sections)
+        + "".join(f'<h2>{esc_text(h)}</h2><div class="prose">{html}</div>' for h, html in sections)
         + "<h2>お問い合わせ先</h2>" + contact_block()
-        + f'<p class="meta enacted">{POLICY_ENACTED} 制定</p>'
+        + f'<p class="meta enacted">{POLICY_ENACTED} 制定'
+        + (f"<br>{revised} 改訂" if revised else "") + "</p>"
     )
     return page(site, title=title, body=body, depth=depth, description=description)
 
@@ -749,6 +778,8 @@ def render_privacy(site: Site) -> str:
     Cookie・ブラウザへの保存・外部からの読み込みは全ページでゼロ。
     JavaScript は検索ページ（search.js）だけ。検索語はURLの「#」以降に持たせて
     サーバーに送らない。
+    2026-11-19: 全ページに「ふりがな」ボタン（furigana.js）を足した。表示する設定にしたときだけ、
+    その設定をブラウザ（localStorage）に保存する。サーバーには送らない。
     集まるのはサーバー会社が自動で取るアクセスログ（AWStatsで集計）と、
     問い合わせのメールだけ。サイトに機能を足したら、ここも見直すこと。
     2026-10-19: 連絡先にSNS（X・Instagram）を足したので、そのメッセージも含めた。
@@ -758,10 +789,15 @@ def render_privacy(site: Site) -> str:
          "<p>本サイトそのものは、利用者の情報を集めていません。本サイトはあらかじめ作成したページを配信するだけの仕組みで、"
          "<b>Cookie（クッキー）、アクセス解析ツール、広告を使っていません。</b>"
          "外部のサービスからフォントや画像を読み込むこともありません。</p>"
-         "<p>JavaScriptは「ことばで検索」のページでだけ使っています。検索はお使いの端末の中で行い、"
+         "<p>JavaScriptは、「ことばで検索」のページの検索と、各ページの「ふりがな」ボタンにだけ使っています。"
+         "検索はお使いの端末の中で行い、"
          "<b>検索したことばは、本サイトのサーバーを含め、どこにも送られません。</b>"
          "検索ページを開いたときに検索用の索引ファイルを取得したことはアクセスログに記録されますが、"
          "検索したことばは記録されません。</p>"
+         "<p>「ふりがな」ボタンでふりがなを表示する設定にすると、<b>その設定だけ</b>をお使いのブラウザの中"
+         "（ローカルストレージ）に保存します。ほかのページを開いたときも同じ表示にするためです。"
+         "この設定は、本サイトのサーバーを含め、どこにも送られません。"
+         "ふりがなを表示しない設定に戻すと、保存した設定は消えます。</p>"
          "<p>ただし、次の情報は取り扱います。</p>"
          "<ol>"
          "<li><b>アクセスログ</b>　本サイトを置いているレンタルサーバー（エックスサーバー株式会社）が、閲覧のたびに自動で記録します。"
@@ -799,10 +835,11 @@ def render_privacy(site: Site) -> str:
     ]
     return legal_page(
         site, title="プライバシーポリシー",
-        lead=f"みらい議会＠遠賀町（以下「本サイト」）を運営する{esc(OPERATOR)}（以下「運営者」）は、"
+        lead=f"みらい議会＠遠賀町（以下「本サイト」）を運営する{esc_text(OPERATOR)}（以下「運営者」）は、"
              "本サイトの利用者の情報を次のとおり取り扱います。",
         sections=sections,
         description="本サイトが集める情報（アクセスログとお問い合わせのみ）と、その扱い。",
+        revised=PRIVACY_REVISED,
     )
 
 
@@ -820,7 +857,7 @@ def render_terms(site: Site) -> str:
          "<ol>"
          "<li>本サイトは、遠賀町議会の会議録をもとに議事の流れを見やすく整理した、個人が運営する非公式のサイトです。</li>"
          "<li>遠賀町・遠賀町議会が公式に提供しているものではありません。</li>"
-         f"<li>{esc(FOOTER_PARTY_HEAD)}。{esc(FOOTER_PARTY_BODY)}</li>"
+         f"<li>{esc_text(FOOTER_PARTY_HEAD)}。{esc_text(FOOTER_PARTY_BODY)}</li>"
          "</ol>"),
         ("第2条（AI要約について）",
          "<ol>"
@@ -1044,8 +1081,19 @@ def render_about(site: Site) -> str:
         + f'<div class="referral">使用しているモデルは <b>{esc(ai_model(site))}</b>、'
         f'要約の指示の版は <b>{esc(ai_prompt_version(site))}</b> です。'
         f'いま載せている要約は{len(site.summaries)}件です。</div>'
+        + "<h2>ふりがなについて</h2><div class=\"stack\">"
+        '<div class="card"><span class="t">ふりがなは自動で付けています</span>'
+        '<span class="s">ページ上部の「ふりがな」ボタンで、表示と非表示を切り替えられます。'
+        "読みは、このサイトが書いた文とAI要約に、読みの辞書（Sudachi）を使って自動で付けています。"
+        "誤った読みが付いていることがあります。お気づきの点はご連絡ください。</span></div>"
+        '<div class="card"><span class="t">会議録などの原文には付けません</span>'
+        '<span class="s">会議録の発言、一般質問通告書の質問事項、議案名、会議名、人の名前など、'
+        "公式資料から持ってきた文字にはふりがなを付けていません。"
+        "自動で付けた読みの誤りが、原文の誤りのように見えないようにするためです。"
+        "地名などの固有名詞は、読みを確かめたものにだけ付けています。</span></div>"
+        "</div>"
         + "<h2>載せている期間</h2><div class=\"referral\">"
-        f"このサイトが載せているのは<b>{esc(coverage_label(site))}以降</b>の会議録です。"
+        f"このサイトが載せているのは<b>{esc_text(coverage_label(site))}以降</b>の会議録です。"
         "それより前の会議録は、下記の遠賀町議会 会議録検索システムでご覧になれます。</div>"
         "<h2>ソースコード</h2>"
         '<div class="referral">このサイトのプログラムは、'
@@ -1249,6 +1297,25 @@ def load_kekka(root: Path) -> dict[str, dict]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_furigana(root: Path, speakers: dict[str, dict], aliases: dict[str, str]) -> FG.Furigana:
+    """ふりがなの設定を読む。
+
+    `masters/furigana.json` の `readings` は人が確かめた読み（地名・元号など、
+    自動では付けない固有名詞もこれで付く）、`skip` は読みを付けない語。
+    発言者マスタの氏名と姓も付けない語に加える。AI要約に「古野町長」とあると、
+    解析器が「古野町（地名）＋長」と切ってしまうため、先に氏名として取り除く。
+    """
+    path = root / "masters" / "furigana.json"
+    conf = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    names = set(speakers) | set(aliases) | set(aliases.values())
+    skip = set(conf.get("skip", [])) | names
+    for name in names:
+        first = next(iter(FG.tokenizer().tokenize(name)), None)
+        if first is not None and first.part_of_speech()[2:4] == ("人名", "姓") and len(first.surface()) >= 2:
+            skip.add(first.surface())
+    return FG.Furigana(conf.get("readings", {}), skip)
+
+
 def load_fino(root: Path) -> dict[str, int]:
     """state.json から UNID → FINO を作る。原文リンクの組み立てに使う。"""
     state_path = root / "state.json"
@@ -1338,13 +1405,15 @@ def build(root: Path, out: Path, since: date, limit_meetings: int | None) -> Sit
     overrides = json.loads((root / "masters" / "speakers.json").read_text(encoding="utf-8")) \
         if (root / "masters" / "speakers.json").exists() else {}
     kekka = load_kekka(root)
+    furigana = load_furigana(root, speakers, overrides.get("aliases", {}))
     summaries, held = load_summaries(root)
     print(f"  AI要約 {len(summaries)}件を読みました"
           + (f"（検証が通らず保留 {held}件）" if held else ""))
     return Site(out=out, transcripts=transcripts, fino=fino, threads=threads,
                 bills=bills, speakers=speakers, meetings=meetings,
                 slugs=overrides.get("slugs", {}), member_bills=dict(member_bills),
-                current_members=current_members, summaries=summaries, kekka=kekka)
+                current_members=current_members, summaries=summaries, kekka=kekka,
+                furigana=furigana)
 
 
 def main(argv: list[str] | None = None) -> int:
